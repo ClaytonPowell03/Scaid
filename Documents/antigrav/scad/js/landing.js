@@ -5,8 +5,10 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 
 inject();
+injectSpeedInsights();
 
 // ── Particles ────────────────────────────────────────
 async function initParticles() {

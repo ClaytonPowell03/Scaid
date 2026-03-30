@@ -19,6 +19,7 @@
     "@tsparticles/engine": "^3.7.1",
     "@tsparticles/slim": "^3.7.1",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "codemirror": "^6.0.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",

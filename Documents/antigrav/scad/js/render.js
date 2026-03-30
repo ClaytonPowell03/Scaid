@@ -16,8 +16,10 @@ import { createScene, createAxesHUD } from './three-scene.js';
 import { parseSCAD } from './scad-parser.js';
 import { TEMPLATES } from './templates.js';
 import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 
 inject();
+injectSpeedInsights();
 
 // ── Sample SCAD Code ────────────────────────────────
 const SAMPLE_CODE = `// SCAD Studio — Welcome!
