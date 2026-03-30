@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SCAD Studio — Editor</title>
-  <meta name="description" content="Write SCAD code and preview 3D models in real-time with SCAD Studio's powerful browser-based editor." />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◇</text></svg>" />
+  <title>scAId — Editor</title>
+  <meta name="description" content="Write SCAD code and preview 3D models in real-time with scAId's powerful browser-based editor." />
+  <link rel="icon" type="image/png" href="/logo.png" />
   <link rel="stylesheet" href="/css/global.css" />
   <link rel="stylesheet" href="/css/render.css" />
 </head>
@@ -15,8 +15,8 @@
   <div class="loading-screen" id="loading-screen">
     <div class="loading-screen__content">
       <div class="loading-screen__logo">
-        <div class="loading-screen__icon">◇</div>
-        <span>SCAD Studio</span>
+        <img src="/logo.png" alt="" class="loading-screen__icon" style="width:32px; height:32px; object-fit:contain;" />
+        <span>scAId</span>
       </div>
       <div class="loading-screen__bar">
         <div class="loading-screen__bar-fill"></div>
@@ -31,8 +31,8 @@
     <div class="toolbar">
       <div class="toolbar__left">
         <a href="/" class="toolbar__logo">
-          <div class="toolbar__logo-icon">◇</div>
-          SCAD Studio
+          <img src="/logo.png" alt="" class="toolbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
+          scAId
         </a>
         <div class="toolbar__sep"></div>
         <span class="toolbar__filename" id="filename" contenteditable="true" spellcheck="false">untitled.scad</span>
@@ -104,7 +104,7 @@
 
         <!-- Empty State -->
         <div class="preview-empty" id="preview-empty">
-          <div class="preview-empty__icon">◇</div>
+          <img src="/logo.png" alt="" class="preview-empty__icon" style="width:64px; height:64px; object-fit:contain; opacity:0.3;" />
           <div class="preview-empty__text">No model rendered</div>
           <div class="preview-empty__hint">Press Ctrl+Enter or click Render</div>
         </div>
