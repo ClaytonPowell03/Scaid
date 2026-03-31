@@ -12,10 +12,6 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching, foldGutter 
 
 import * as THREE from 'three';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
-import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
-import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
-import polyslicePkg from '@jgphilpott/polyslice';
-const { Polyslice } = polyslicePkg;
 import { createScene, createAxesHUD } from './three-scene.js';
 import { parseSCAD } from './scad-parser.js';
 import { TEMPLATES } from './templates.js';
@@ -476,14 +472,15 @@ function exportScreenshot() {
   }
 }
 
-// ── Export Handling ─────────────────────────────────────
-function exportMesh(format) {
+// ── STL Export ───────────────────────────────────────
+function exportSTL() {
   if (!scene3d || !scene3d.modelGroup || scene3d.modelGroup.children.length === 0) {
     showToast('✗ Nothing to export');
     return;
   }
   try {
-    showToast(`Exporting ${format.toUpperCase()}...`);
+    showToast('Exporting STL...');
+    const exporter = new STLExporter();
     const exportGroup = new THREE.Group();
     scene3d.modelGroup.traverse((child) => {
       if (child.isMesh && !child.userData.isWireframe) {
@@ -491,56 +488,25 @@ function exportMesh(format) {
       }
     });
 
-    let outputString = '';
-    const exportType = 'text/plain';
-
-    if (format === 'stl') {
-      const exporter = new STLExporter();
-      outputString = exporter.parse(exportGroup);
-      downloadBlob(outputString, exportType, 'stl');
-    } else if (format === 'obj') {
-      const exporter = new OBJExporter();
-      outputString = exporter.parse(exportGroup);
-      downloadBlob(outputString, exportType, 'obj');
-    } else if (format === 'gcode') {
-      let combinedMesh = null;
-      exportGroup.traverse((c) => {
-        if (c.isMesh && !combinedMesh) combinedMesh = c;
-      });
-      if (!combinedMesh) throw new Error('No valid mesh found for slicing.');
-      const polyslicer = new Polyslice();
-      outputString = polyslicer.slice(combinedMesh);
-      downloadBlob(outputString, exportType, 'gcode');
-    } else if (format === 'gltf') {
-      const exporter = new GLTFExporter();
-      exporter.parse(scene3d.modelGroup, (gltf) => {
-        outputString = JSON.stringify(gltf, null, 2);
-        downloadBlob(outputString, 'application/json', 'gltf');
-      }, (err) => {
-        throw new Error(err.message || 'GLTF Export failed');
-      }, { binary: false });
-    }
+    const stlString = exporter.parse(exportGroup);
+    const blob = new Blob([stlString], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    const baseName = (document.getElementById('filename').textContent || 'model.scad').replace(/\.scad$/i, '');
+    a.download = `${baseName}.stl`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ STL exported');
+    consoleLog('STL exported successfully', 'success');
   } catch (err) {
     console.error('Export Error:', err);
     showToast('✗ Export error');
     consoleLog(`Export error: ${err.message}`, 'error');
   }
-}
-
-function downloadBlob(content, mimeType, ext) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  const baseName = (document.getElementById('filename').textContent || 'model').replace(/\.scad$/i, '');
-  a.download = `${baseName}.${ext}`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast(`✓ ${ext.toUpperCase()} exported`);
-  consoleLog(`${ext.toUpperCase()} exported successfully`, 'success');
 }
 
 // ── Modals ───────────────────────────────────────────
@@ -772,33 +738,7 @@ function initAIChat() {
 // ── Toolbar Buttons ─────────────────────────────────
 function initToolbar() {
   document.getElementById('btn-render').addEventListener('click', renderModel);
-  document.getElementById('btn-export-toggle').addEventListener('click', () => {
-    document.getElementById('export-dropdown').classList.toggle('active');
-  });
-
-  document.addEventListener('click', (e) => {
-    const dropdown = document.getElementById('export-dropdown');
-    if (dropdown && !dropdown.contains(e.target)) {
-      dropdown.classList.remove('active');
-    }
-  });
-
-  document.getElementById('btn-export-stl').addEventListener('click', () => {
-    document.getElementById('export-dropdown').classList.remove('active');
-    exportMesh('stl');
-  });
-  document.getElementById('btn-export-obj').addEventListener('click', () => {
-    document.getElementById('export-dropdown').classList.remove('active');
-    exportMesh('obj');
-  });
-  document.getElementById('btn-export-gltf').addEventListener('click', () => {
-    document.getElementById('export-dropdown').classList.remove('active');
-    exportMesh('gltf');
-  });
-  document.getElementById('btn-export-gcode').addEventListener('click', () => {
-    document.getElementById('export-dropdown').classList.remove('active');
-    exportMesh('gcode');
-  });
+  document.getElementById('btn-export').addEventListener('click', exportSTL);
   document.getElementById('btn-screenshot').addEventListener('click', exportScreenshot);
   document.getElementById('btn-save').addEventListener('click', saveFile);
 

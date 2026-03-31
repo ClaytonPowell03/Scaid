@@ -16,7 +16,6 @@
     "@codemirror/state": "^6.5.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.35.0",
-    "@jgphilpott/polyslice": "^26.3.1",
     "@tsparticles/engine": "^3.7.1",
     "@tsparticles/slim": "^3.7.1",
     "@vercel/analytics": "^2.0.1",
