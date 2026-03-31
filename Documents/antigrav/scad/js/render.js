@@ -13,6 +13,7 @@ import { syntaxHighlighting, defaultHighlightStyle, bracketMatching, foldGutter 
 import * as THREE from 'three';
 import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { createScene, createAxesHUD } from './three-scene.js';
+import { DEFAULT_FILENAME, DEFAULT_SAMPLE_CODE } from './default-sample.js';
 import { parseSCAD } from './scad-parser.js';
 import { TEMPLATES } from './templates.js';
 import { inject } from '@vercel/analytics';
@@ -22,52 +23,7 @@ inject();
 injectSpeedInsights();
 
 // ── Sample SCAD Code ────────────────────────────────
-const SAMPLE_CODE = `// SCAD Studio — Welcome!
-// Press Ctrl+Enter to render, or try a template →
-
-// Base platform
-color([0.0, 0.94, 1.0])
-translate([0, 0, 0])
-  cube(size = [8, 8, 0.5], center = true);
-
-// Central column
-color([0.66, 0.33, 0.97])
-translate([0, 0, 0.25])
-  cylinder(h = 3, r = 1.2, center = false);
-
-// Top sphere
-color([0.93, 0.28, 0.60])
-translate([0, 0, 3.25])
-  sphere(r = 1.0);
-
-// Corner pillars
-color([0.23, 0.51, 0.96])
-translate([3, 3, 0.25])
-  cylinder(h = 2, r = 0.3);
-
-translate([3, -3, 0.25])
-  cylinder(h = 2, r = 0.3);
-
-translate([-3, 3, 0.25])
-  cylinder(h = 2, r = 0.3);
-
-translate([-3, -3, 0.25])
-  cylinder(h = 2, r = 0.3);
-
-// Decorative gold spheres
-color([1.0, 0.84, 0.0])
-translate([3, 3, 2.45])
-  sphere(r = 0.25);
-
-translate([3, -3, 2.45])
-  sphere(r = 0.25);
-
-translate([-3, 3, 2.45])
-  sphere(r = 0.25);
-
-translate([-3, -3, 2.45])
-  sphere(r = 0.25);
-`;
+const SAMPLE_CODE = DEFAULT_SAMPLE_CODE;
 
 // ── State ───────────────────────────────────────────
 let editor;
@@ -899,6 +855,8 @@ function hideLoadingScreen() {
 document.addEventListener('DOMContentLoaded', () => {
   consoleLog('SCAD Studio v3.0 initialized', 'info');
   consoleLog('Type SCAD code and press Ctrl+Enter to render', 'info');
+  const filenameEl = document.getElementById('filename');
+  if (filenameEl) filenameEl.textContent = DEFAULT_FILENAME;
 
   initEditor();
   initScene();
