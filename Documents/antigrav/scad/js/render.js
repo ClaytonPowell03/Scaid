@@ -637,7 +637,7 @@ function initAIChat() {
     }
 
     setButtonBusy('btn-ai-generate', true, 'Generating...', 'Generate');
-    updateAIStatus('Asking Gemini 3.1 Pro to generate SCAD...');
+    updateAIStatus('Asking Gemini 3.1 Pro... (this can take up to 4 minutes, do not be concerned)');
     consoleLog('Sending prompt to Gemini 3.1 Pro model', 'info');
 
     try {
@@ -673,7 +673,7 @@ function initAIChat() {
     }
 
     setButtonBusy('face-edit-apply', true, 'Applying...', 'Apply Edit');
-    updateAIStatus('Asking Gemini 3.1 Pro to patch selected area...');
+    updateAIStatus('Asking Gemini 3.1 Pro to patch area... (this can take up to 4 minutes, do not be concerned)');
     consoleLog('Sending face-edit prompt to Gemini 3.1 Pro model', 'info');
 
     try {
