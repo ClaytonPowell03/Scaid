@@ -167,7 +167,202 @@ function extractScad(text) {
   if (!text) return '';
   const fenced = text.match(/```(?:scad|openscad)?\s*([\s\S]*?)```/i);
   if (fenced && fenced[1]) return fenced[1].trim();
-  return text.trim();
+  let normalized = text.trim();
+  const openFence = normalized.match(/^```(?:scad|openscad)?\s*/i);
+  if (openFence) normalized = normalized.slice(openFence[0].length);
+  normalized = normalized.replace(/\s*```$/, '');
+  return normalized.trim();
+}
+
+function getGeminiFinishReason(responseJson) {
+  return String(responseJson?.candidates?.[0]?.finishReason || '').trim().toUpperCase();
+}
+
+function analyzeScadCompleteness(source) {
+  const stack = [];
+  let inString = false;
+  let inLineComment = false;
+  let inBlockComment = false;
+
+  for (let i = 0; i < source.length; i += 1) {
+    const char = source[i];
+    const next = source[i + 1];
+
+    if (inLineComment) {
+      if (char === '\n') inLineComment = false;
+      continue;
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && next === '/') {
+        inBlockComment = false;
+        i += 1;
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (char === '\\') {
+        i += 1;
+        continue;
+      }
+      if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '/' && next === '/') {
+      inLineComment = true;
+      i += 1;
+      continue;
+    }
+
+    if (char === '/' && next === '*') {
+      inBlockComment = true;
+      i += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '{' || char === '[' || char === '(') {
+      stack.push(char);
+      continue;
+    }
+
+    if (char === '}' || char === ']' || char === ')') {
+      const expected = char === '}' ? '{' : (char === ']' ? '[' : '(');
+      if (stack[stack.length - 1] === expected) stack.pop();
+    }
+  }
+
+  const reasons = [];
+  if (stack.length > 0) reasons.push(`unclosed delimiters: ${stack.join('')}`);
+  if (inString) reasons.push('unterminated string literal');
+  if (inBlockComment) reasons.push('unterminated block comment');
+
+  return {
+    complete: reasons.length === 0,
+    reasons,
+  };
+}
+
+function shouldContinueScad(scadCode, finishReason) {
+  const completion = analyzeScadCompleteness(scadCode || '');
+  if (!completion.complete) return true;
+  if (!finishReason) return false;
+  return finishReason.includes('MAX') || finishReason.includes('TOKEN') || finishReason.includes('LENGTH');
+}
+
+function mergeScadContinuation(existingCode, continuationCode) {
+  const base = String(existingCode || '');
+  const addition = String(continuationCode || '').trim();
+
+  if (!addition) return base;
+  if (!base) return addition;
+  if (base.includes(addition)) return base;
+  if (addition.includes(base)) return addition;
+
+  const maxChars = Math.min(base.length, addition.length, 4000);
+  for (let len = maxChars; len >= 24; len -= 1) {
+    if (base.slice(-len) === addition.slice(0, len)) {
+      return base + addition.slice(len);
+    }
+  }
+
+  const baseLines = base.split(/\r?\n/);
+  const addLines = addition.split(/\r?\n/);
+  const maxLines = Math.min(baseLines.length, addLines.length, 24);
+  for (let len = maxLines; len >= 1; len -= 1) {
+    if (baseLines.slice(-len).join('\n') === addLines.slice(0, len).join('\n')) {
+      return `${base}\n${addLines.slice(len).join('\n')}`.trim();
+    }
+  }
+
+  return `${base}\n${addition}`.trim();
+}
+
+function buildContinuationPrompt(originalPrompt, partialCode, completion) {
+  const tail = partialCode.slice(-2400);
+  const reasons = completion.reasons.length > 0
+    ? completion.reasons.join(', ')
+    : 'model stopped before clearly finishing the script';
+
+  return [
+    'The previous OpenSCAD response was cut off before the script was complete.',
+    'Continue the SAME script from the exact point it stopped.',
+    'Return ONLY the missing continuation text.',
+    'Do not restart from the top.',
+    'Do not repeat large sections that are already present.',
+    'Do not explain anything.',
+    '',
+    `Original task:\n${originalPrompt}`,
+    '',
+    `Existing partial script tail:\n\`\`\`\n${tail}\n\`\`\``,
+    '',
+    `Why continuation is needed: ${reasons}`,
+    '',
+    'Continue immediately after the final character of the partial script above.',
+  ].join('\n');
+}
+
+async function generateCompleteScad({
+  apiKey,
+  model,
+  system,
+  userPrompt,
+  maxOutputTokens,
+  maxContinuations = 3,
+}) {
+  let response = await callGemini({
+    apiKey,
+    model,
+    system,
+    userPrompt,
+    maxOutputTokens,
+  });
+
+  let scadCode = extractScad(extractTextFromGemini(response));
+  let finishReason = getGeminiFinishReason(response);
+  let continuationCount = 0;
+
+  while (shouldContinueScad(scadCode, finishReason) && continuationCount < maxContinuations) {
+    const completion = analyzeScadCompleteness(scadCode);
+    const continuationPrompt = buildContinuationPrompt(userPrompt, scadCode, completion);
+    const nextResponse = await callGemini({
+      apiKey,
+      model,
+      system,
+      userPrompt: continuationPrompt,
+      maxOutputTokens,
+    });
+
+    const nextChunk = extractScad(extractTextFromGemini(nextResponse));
+    if (!nextChunk) break;
+
+    const merged = mergeScadContinuation(scadCode, nextChunk);
+    if (merged === scadCode) break;
+
+    scadCode = merged;
+    finishReason = getGeminiFinishReason(nextResponse);
+    continuationCount += 1;
+  }
+
+  const completion = analyzeScadCompleteness(scadCode);
+  if (!scadCode) {
+    throw new Error('Model returned an empty response.');
+  }
+  if (!completion.complete) {
+    throw new Error(`Model returned incomplete SCAD after ${continuationCount + 1} attempt(s): ${completion.reasons.join(', ')}`);
+  }
+
+  return {
+    scadCode,
+    finishReason,
+    continuationCount,
+  };
 }
 
 // ── Gemini API call ──────────────────────────────────
@@ -220,7 +415,7 @@ async function handleGenerate(req, res, env) {
     : `Generate OpenSCAD code from scratch.\n\nUser request: ${prompt}`;
 
   const model = env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
-  const response = await callGemini({
+  const result = await generateCompleteScad({
     apiKey: env.GEMINI_API_KEY,
     model,
     maxOutputTokens: 16384,
@@ -228,10 +423,12 @@ async function handleGenerate(req, res, env) {
     userPrompt,
   });
 
-  const scadCode = extractScad(extractTextFromGemini(response));
-  if (!scadCode) return sendJson(res, 502, { error: 'Model returned an empty response.' });
-
-  sendJson(res, 200, { scadCode, model });
+  sendJson(res, 200, {
+    scadCode: result.scadCode,
+    model,
+    finishReason: result.finishReason,
+    continuationCount: result.continuationCount,
+  });
 }
 
 // ── Route: /api/chat/face-edit ───────────────────────
@@ -253,18 +450,20 @@ async function handleFaceEdit(req, res, env) {
   ].join('\n');
 
   const model = env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
-  const response = await callGemini({
+  const result = await generateCompleteScad({
     apiKey: env.GEMINI_API_KEY,
     model,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_FACE_EDIT,
     userPrompt,
   });
 
-  const scadCode = extractScad(extractTextFromGemini(response));
-  if (!scadCode) return sendJson(res, 502, { error: 'Model returned an empty response.' });
-
-  sendJson(res, 200, { scadCode, model });
+  sendJson(res, 200, {
+    scadCode: result.scadCode,
+    model,
+    finishReason: result.finishReason,
+    continuationCount: result.continuationCount,
+  });
 }
 
 // ── Middleware export ────────────────────────────────
