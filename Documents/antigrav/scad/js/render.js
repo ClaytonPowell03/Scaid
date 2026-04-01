@@ -603,7 +603,7 @@ function initAIChat() {
       });
       applyGeneratedCode(result.scadCode, result.model || 'AI');
       addToHistory(prompt, result.model || 'AI', result.scadCode);
-      updateAIStatus(`Generated with ${result.model || 'AI'}.`);
+      updateAIStatus('Generated with AI.');
       chatInput.value = '';
     } catch (err) {
       const msg = err?.message || 'AI request failed.';
@@ -640,7 +640,7 @@ function initAIChat() {
       });
       applyGeneratedCode(result.scadCode, result.model || 'AI');
       addToHistory(prompt, result.model || 'AI', result.scadCode);
-      updateAIStatus(`Face edit applied with ${result.model || 'AI'}.`);
+      updateAIStatus('Face edit applied with AI.');
       hideFaceEditPopover();
       if (scene3d) scene3d.clearFaceSelection();
       selectedFaceContext = null;
