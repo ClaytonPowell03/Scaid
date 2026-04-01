@@ -606,7 +606,7 @@
 .face-edit-popover {
   position: absolute;
   z-index: 30;
-  width: min(320px, 60vw);
+  width: min(340px, 64vw);
   background: rgba(10,10,15,0.95);
   border: 1px solid rgba(0,240,255,0.34);
   border-radius: 12px;
@@ -663,6 +663,92 @@
   background: rgba(0,0,0,0.24);
 }
 
+.face-edit-popover__section-label {
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.face-edit-quick {
+  border: 1px solid rgba(0,240,255,0.14);
+  border-radius: 9px;
+  padding: 8px;
+  background: rgba(0,240,255,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.face-edit-quick--unavailable {
+  border-color: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+
+.face-edit-quick--unavailable .face-edit-quick__row,
+.face-edit-quick--unavailable .face-edit-quick__actions {
+  display: none;
+}
+
+.face-edit-quick__label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.face-edit-quick__hint {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.face-edit-quick__row,
+.face-edit-quick__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.face-edit-quick__input {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(6,6,10,0.8);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  padding: 8px 10px;
+  outline: none;
+}
+
+.face-edit-quick__input:focus {
+  border-color: var(--border-accent);
+}
+
+.face-edit-quick__nudge {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.face-edit-quick__nudge:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
 .face-edit-popover__input {
   width: 100%;
   min-height: 64px;
@@ -708,6 +794,16 @@
 .face-edit-popover__btn:disabled {
   opacity: 0.55;
   cursor: wait;
+}
+
+.face-edit-popover__btn--accent {
+  border-color: var(--border-accent);
+  background: rgba(0,240,255,0.12);
+  color: var(--text-accent);
+}
+
+.face-edit-popover__btn--accent:hover {
+  background: rgba(0,240,255,0.2);
 }
 
 /* ── Status Bar ────────────────────────────────────── */

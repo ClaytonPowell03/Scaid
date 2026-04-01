@@ -15,6 +15,7 @@ import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { createScene, createAxesHUD } from './three-scene.js';
 import { DEFAULT_FILENAME, DEFAULT_SAMPLE_CODE } from './default-sample.js';
 import { parseSCAD } from './scad-parser.js';
+import { getSimpleFaceEditSpec, applySimpleFaceEdit } from './simple-face-edit.js';
 import { TEMPLATES } from './templates.js';
 import { inject } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
@@ -30,6 +31,7 @@ let editor;
 let scene3d;
 let axesHUD;
 let selectedFaceContext = null;
+let selectedQuickEditSpec = null;
 
 // ── Console System ──────────────────────────────────
 const consoleLogs = [];
@@ -79,11 +81,74 @@ function formatNumber(value) {
   return value.toFixed(2);
 }
 
+function formatQuickEditValue(value) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '';
+  const rounded = Math.round(value * 1000) / 1000;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
+function getQuickEditStep(value) {
+  const magnitude = Math.abs(Number(value));
+  if (!Number.isFinite(magnitude) || magnitude >= 10) return 1;
+  if (magnitude >= 1) return 0.1;
+  return 0.05;
+}
+
 function formatSelectionLabel(selection) {
-  if (!selection) return 'Click a face in the model to open a targeted AI edit.';
+  if (!selection) return 'Click a face to quickly change simple dimensions or use AI for bigger edits.';
   const primitive = selection.meta?.primitive || selection.meta?.operation || 'geometry';
   const line = selection.meta?.line ? `line ${selection.meta.line}` : 'source hint unavailable';
   return `Selected: ${primitive} (${line}).`;
+}
+
+function refreshQuickEditUI(selection) {
+  const quickSection = document.getElementById('face-edit-quick');
+  const label = document.getElementById('face-edit-quick-label');
+  const hint = document.getElementById('face-edit-quick-hint');
+  const input = document.getElementById('face-edit-value');
+  const quickApply = document.getElementById('face-edit-quick-apply');
+  const minus = document.getElementById('face-edit-quick-minus');
+  const plus = document.getElementById('face-edit-quick-plus');
+  if (!quickSection || !label || !hint || !input || !quickApply || !minus || !plus) return;
+
+  selectedQuickEditSpec = selection ? getSimpleFaceEditSpec(getEditorContent(), selection) : null;
+
+  if (!selectedQuickEditSpec) {
+    quickSection.classList.add('face-edit-quick--unavailable');
+    label.textContent = 'Quick Edit Unavailable';
+    hint.textContent = 'This selection needs AI or a manual code edit. Quick edit currently supports cubes, cylinders, cones, and spheres.';
+    input.value = '';
+    input.disabled = true;
+    quickApply.disabled = true;
+    minus.disabled = true;
+    plus.disabled = true;
+    return;
+  }
+
+  const step = getQuickEditStep(selectedQuickEditSpec.currentValue);
+  quickSection.classList.remove('face-edit-quick--unavailable');
+  label.textContent = selectedQuickEditSpec.label;
+  hint.textContent = `${selectedQuickEditSpec.hint}. This rewrites the SCAD source directly.`;
+  input.disabled = false;
+  quickApply.disabled = false;
+  minus.disabled = false;
+  plus.disabled = false;
+  input.step = String(step);
+  input.dataset.step = String(step);
+  input.value = formatQuickEditValue(selectedQuickEditSpec.currentValue);
+}
+
+function nudgeQuickEditValue(direction) {
+  const input = document.getElementById('face-edit-value');
+  if (!input || input.disabled) return;
+
+  const baseValue = input.value === ''
+    ? Number(selectedQuickEditSpec?.currentValue)
+    : Number(input.value);
+  const step = Number(input.dataset.step || input.step || '0.1');
+  if (!Number.isFinite(baseValue) || !Number.isFinite(step)) return;
+
+  input.value = formatQuickEditValue(baseValue + (direction * step));
 }
 
 async function requestScadFromApi(url, payload) {
@@ -122,6 +187,7 @@ function applyGeneratedCode(scadCode, sourceLabel) {
 function hideFaceEditPopover() {
   const popover = document.getElementById('face-edit-popover');
   if (popover) popover.classList.remove('visible');
+  selectedQuickEditSpec = null;
 }
 
 function positionFacePopover(selection) {
@@ -130,8 +196,8 @@ function positionFacePopover(selection) {
   if (!popover || !previewPanel || !selection?.screenPoint) return;
 
   const panelRect = previewPanel.getBoundingClientRect();
-  const popWidth = 320;
-  const popHeight = 220;
+  const popWidth = popover.offsetWidth || 340;
+  const popHeight = popover.offsetHeight || 320;
   const margin = 12;
   let left = selection.screenPoint.x - panelRect.left + 10;
   let top = selection.screenPoint.y - panelRect.top + 10;
@@ -148,8 +214,9 @@ function positionFacePopover(selection) {
 function showFaceEditPopover(selection) {
   const popover = document.getElementById('face-edit-popover');
   const meta = document.getElementById('face-edit-meta');
-  const input = document.getElementById('face-edit-input');
-  if (!popover || !meta || !input) return;
+  const aiInput = document.getElementById('face-edit-input');
+  const quickInput = document.getElementById('face-edit-value');
+  if (!popover || !meta || !aiInput || !quickInput) return;
 
   const primitive = selection.meta?.primitive || selection.meta?.operation || 'geometry';
   const line = selection.meta?.line ? `line ${selection.meta.line}` : 'line unknown';
@@ -161,10 +228,13 @@ function showFaceEditPopover(selection) {
     : 'n/a';
 
   meta.textContent = `${primitive} • ${line} • p(${point}) • n(${normal})`;
-  input.value = '';
-  positionFacePopover(selection);
+  aiInput.value = '';
+  refreshQuickEditUI(selection);
   popover.classList.add('visible');
-  input.focus();
+  positionFacePopover(selection);
+
+  if (selectedQuickEditSpec) quickInput.focus();
+  else aiInput.focus();
 }
 
 // ── Initialize Editor ───────────────────────────────
@@ -263,8 +333,9 @@ function renderModel() {
 
         scene3d.setModel(group);
         selectedFaceContext = null;
+        selectedQuickEditSpec = null;
         hideFaceEditPopover();
-        updateFaceHint('Click a face in the model to open a targeted AI edit.');
+        updateFaceHint('Click a face to quickly change simple dimensions or use AI for bigger edits.');
 
         statusText.textContent = `Rendered in ${elapsed}ms`;
         infoStatus.textContent = `Rendered · ${elapsed}ms`;
@@ -582,7 +653,13 @@ function initAIChat() {
   const generateButton = document.getElementById('btn-ai-generate');
   const faceEditInput = document.getElementById('face-edit-input');
   const faceEditApply = document.getElementById('face-edit-apply');
+  const quickEditInput = document.getElementById('face-edit-value');
+  const quickEditApply = document.getElementById('face-edit-quick-apply');
+  const quickEditMinus = document.getElementById('face-edit-quick-minus');
+  const quickEditPlus = document.getElementById('face-edit-quick-plus');
   const faceEditClose = document.getElementById('face-edit-close');
+
+  if (faceEditClose) faceEditClose.textContent = 'x';
 
   async function runGenerate() {
     if (!chatInput) return;
@@ -628,7 +705,7 @@ function initAIChat() {
       return;
     }
 
-    setButtonBusy('face-edit-apply', true, 'Applying...', 'Apply Edit');
+    setButtonBusy('face-edit-apply', true, 'Applying...', 'Use AI');
     updateAIStatus('Asking AI to patch area... (this can take up to 4 minutes, do not be concerned)');
     consoleLog('Sending face-edit prompt to AI model', 'info');
 
@@ -644,14 +721,55 @@ function initAIChat() {
       hideFaceEditPopover();
       if (scene3d) scene3d.clearFaceSelection();
       selectedFaceContext = null;
-      updateFaceHint('Face edit applied. Click another face for more targeted edits.');
+      selectedQuickEditSpec = null;
+      updateFaceHint('Face edit applied. Click another face to keep tuning the model.');
     } catch (err) {
       const msg = err?.message || 'Face edit failed.';
       showToast(`✕ ${msg}`);
       updateAIStatus(msg);
       consoleLog(`Face edit error: ${msg}`, 'error');
     } finally {
-      setButtonBusy('face-edit-apply', false, 'Applying...', 'Apply Edit');
+      setButtonBusy('face-edit-apply', false, 'Applying...', 'Use AI');
+    }
+  }
+
+  function runQuickFaceEdit() {
+    if (!selectedFaceContext) {
+      showToast('Select a face first');
+      return;
+    }
+    if (!quickEditInput) return;
+
+    const nextValue = quickEditInput.value.trim();
+    if (!nextValue) {
+      showToast('Enter a new value first');
+      return;
+    }
+
+    setButtonBusy('face-edit-quick-apply', true, 'Applying...', 'Apply Quick Edit');
+    updateAIStatus('Applying quick edit locally...');
+    consoleLog('Applying local quick edit', 'info');
+
+    try {
+      const result = applySimpleFaceEdit(getEditorContent(), selectedFaceContext, nextValue);
+      setEditorContent(result.updatedSource);
+      hideFaceEditPopover();
+      if (scene3d) scene3d.clearFaceSelection();
+      selectedFaceContext = null;
+      selectedQuickEditSpec = null;
+      updateFaceHint('Quick edit applied. Click another face to keep tuning the model.');
+      updateAIStatus('Quick edit applied locally.');
+      showToast(`Updated ${result.spec.label} locally`);
+      consoleLog(`Quick edit applied to ${result.spec.label}`, 'success');
+      renderModel();
+    } catch (err) {
+      const msg = err?.message || 'Quick edit failed.';
+      showToast(msg);
+      updateAIStatus(msg);
+      consoleLog(`Quick edit error: ${msg}`, 'error');
+      refreshQuickEditUI(selectedFaceContext);
+    } finally {
+      setButtonBusy('face-edit-quick-apply', false, 'Applying...', 'Apply Quick Edit');
     }
   }
 
@@ -672,6 +790,10 @@ function initAIChat() {
     faceEditApply.addEventListener('click', runFaceEdit);
   }
 
+  if (quickEditApply) {
+    quickEditApply.addEventListener('click', runQuickFaceEdit);
+  }
+
   if (faceEditInput) {
     faceEditInput.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -681,12 +803,30 @@ function initAIChat() {
     });
   }
 
+  if (quickEditInput) {
+    quickEditInput.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        runQuickFaceEdit();
+      }
+    });
+  }
+
+  if (quickEditMinus) {
+    quickEditMinus.addEventListener('click', () => nudgeQuickEditValue(-1));
+  }
+
+  if (quickEditPlus) {
+    quickEditPlus.addEventListener('click', () => nudgeQuickEditValue(1));
+  }
+
   if (faceEditClose) {
     faceEditClose.addEventListener('click', () => {
       hideFaceEditPopover();
       if (scene3d) scene3d.clearFaceSelection();
       selectedFaceContext = null;
-      updateFaceHint('Click a face in the model to open a targeted AI edit.');
+      selectedQuickEditSpec = null;
+      updateFaceHint('Click a face to quickly change simple dimensions or use AI for bigger edits.');
     });
   }
 }
@@ -812,7 +952,8 @@ function initShortcuts() {
       hideFaceEditPopover();
       if (scene3d) scene3d.clearFaceSelection();
       selectedFaceContext = null;
-      updateFaceHint('Click a face in the model to open a targeted AI edit.');
+      selectedQuickEditSpec = null;
+      updateFaceHint('Click a face to quickly change simple dimensions or use AI for bigger edits.');
       return;
     }
 
@@ -867,8 +1008,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIChat();
   initTemplates();
   initHistory();
-  updateAIStatus('Prompt AI to generate or revise full SCAD code.');
-  updateFaceHint('Click a face in the model to open a targeted AI edit.');
+  updateAIStatus('Use quick edit for simple size changes, or AI for larger SCAD revisions.');
+  updateFaceHint('Click a face to quickly change simple dimensions or use AI for bigger edits.');
 
   // Hide loading screen
   hideLoadingScreen();

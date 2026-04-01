@@ -136,8 +136,8 @@
             <div class="ai-mini-panel__actions">
               <button class="ai-mini-panel__btn" id="btn-ai-generate" title="Generate with AI">Generate</button>
             </div>
-            <div class="ai-mini-panel__status" id="ai-chat-status">Prompt AI to generate or revise full SCAD code.</div>
-            <div class="ai-mini-panel__hint" id="ai-face-hint">Click a face in the model to open a targeted AI edit.</div>
+            <div class="ai-mini-panel__status" id="ai-chat-status">Use quick edit for simple size changes, or AI for larger SCAD revisions.</div>
+            <div class="ai-mini-panel__hint" id="ai-face-hint">Click a face to quickly change simple dimensions or use AI for bigger edits.</div>
           </div>
         </div>
         <div class="preview-overlay preview-overlay--bottom-right">
@@ -148,13 +148,26 @@
 
         <div class="face-edit-popover" id="face-edit-popover">
           <div class="face-edit-popover__header">
-            <div class="face-edit-popover__title">Face Edit (AI)</div>
+            <div class="face-edit-popover__title">Face Edit</div>
             <button class="face-edit-popover__close" id="face-edit-close" title="Close">âœ•</button>
           </div>
           <div class="face-edit-popover__meta" id="face-edit-meta"></div>
-          <textarea id="face-edit-input" class="face-edit-popover__input" rows="3" placeholder="Describe what to change on this selected area..."></textarea>
+          <div class="face-edit-quick" id="face-edit-quick">
+            <div class="face-edit-quick__label" id="face-edit-quick-label">Quick Edit</div>
+            <div class="face-edit-quick__hint" id="face-edit-quick-hint">Select a simple primitive face to edit its size directly in SCAD.</div>
+            <div class="face-edit-quick__row">
+              <input id="face-edit-value" class="face-edit-quick__input" type="number" step="0.1" inputmode="decimal" placeholder="New value" />
+            </div>
+            <div class="face-edit-quick__actions">
+              <button class="face-edit-quick__nudge" id="face-edit-quick-minus" type="button">-</button>
+              <button class="face-edit-quick__nudge" id="face-edit-quick-plus" type="button">+</button>
+              <button class="face-edit-popover__btn face-edit-popover__btn--accent" id="face-edit-quick-apply" type="button">Apply Quick Edit</button>
+            </div>
+          </div>
+          <div class="face-edit-popover__section-label">Complex change with AI</div>
+          <textarea id="face-edit-input" class="face-edit-popover__input" rows="3" placeholder="Describe a bigger change if quick edit is not enough..."></textarea>
           <div class="face-edit-popover__actions">
-            <button class="face-edit-popover__btn" id="face-edit-apply">Apply Edit</button>
+            <button class="face-edit-popover__btn" id="face-edit-apply">Use AI</button>
           </div>
         </div>
       </div>

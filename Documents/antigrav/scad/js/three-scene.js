@@ -241,12 +241,18 @@ export function createScene(canvas) {
     const worldNormal = hit.face?.normal
       ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld)
       : new THREE.Vector3(0, 1, 0);
+    const localNormal = hit.face?.normal
+      ? hit.face.normal.clone()
+      : new THREE.Vector3(0, 1, 0);
+    const localPoint = hit.object.worldToLocal(hit.point.clone());
 
     if (faceSelectHandler) {
       faceSelectHandler({
         faceIndex: Number.isInteger(hit.faceIndex) ? hit.faceIndex : null,
         worldPoint: [hit.point.x, hit.point.y, hit.point.z],
         worldNormal: [worldNormal.x, worldNormal.y, worldNormal.z],
+        localPoint: [localPoint.x, localPoint.y, localPoint.z],
+        localNormal: [localNormal.x, localNormal.y, localNormal.z],
         screenPoint: { x: event.clientX, y: event.clientY },
         uv: hit.uv ? [hit.uv.x, hit.uv.y] : null,
         meta: hit.object.userData?.scadMeta || null,

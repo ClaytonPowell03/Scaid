@@ -404,6 +404,7 @@ function attachSourceMetadata(target, metadata = {}) {
     primitive: metadata.primitive || null,
     operation: metadata.operation || null,
     contextPath,
+    args: metadata.args || {},
     argsSummary: summarizeArgs(metadata.args || {}),
     line: sourceHint?.line || null,
     sourceIndex: typeof sourceHint?.index === 'number' ? sourceHint.index : null,

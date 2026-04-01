@@ -1,3 +1,6 @@
 .env
 node_modules/
 dist/
+build_error.log
+vite-dev.err
+vite-dev.out
