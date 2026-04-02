@@ -8,9 +8,6 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
--- Enable RLS on storage.objects (if not already enabled)
-alter table storage.objects enable row level security;
-
 -- Policy: Anyone can view avatars
 create policy "Avatars are publicly accessible"
   on storage.objects for select
