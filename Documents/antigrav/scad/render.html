@@ -97,6 +97,25 @@
         <button class="btn-icon" id="btn-reset-camera" title="Reset camera">
           <span>⌖</span>
         </button>
+          <span>▶</span> Render
+        </button>
+      </div>
+      <div class="toolbar__right">
+        <button class="btn-icon" id="btn-templates" title="Templates">
+          <span>📋</span>
+        </button>
+        <button class="btn-icon" id="btn-history" title="Projects / History">
+          <span>📁</span>
+        </button>
+        <button class="btn-icon" id="btn-wireframe" title="Toggle wireframe (W)">
+          <span>◆</span>
+        </button>
+        <button class="btn-icon" id="btn-grid" title="Toggle grid (G)">
+          <span>▦</span>
+        </button>
+        <button class="btn-icon" id="btn-reset-camera" title="Reset camera">
+          <span>⌖</span>
+        </button>
         <button class="btn-icon" id="btn-shortcuts" title="Keyboard shortcuts (?)">
           <span>⌨</span>
         </button>
@@ -109,12 +128,14 @@
           <span>👤</span> Sign in
         </button>
         <div class="toolbar__user" id="toolbar-user" style="display:none;">
-          <img class="toolbar__avatar" id="toolbar-avatar" src="" alt="" />
+          <div class="toolbar__avatar-wrapper" id="btn-avatar-upload" title="Change Avatar">
+            <img class="toolbar__avatar" id="toolbar-avatar" src="" alt="" />
+            <div class="toolbar__avatar-overlay"><span>+</span></div>
+            <input type="file" id="avatar-input" accept="image/*" style="display:none;" />
+          </div>
           <span class="toolbar__user-name" id="toolbar-user-name"></span>
           <button class="toolbar__signout" id="btn-signout" title="Sign out">✕</button>
         </div>
-      </div>
-    </div>
 
     <!-- ─── Split Pane ───────────────────────────── -->
     <div class="split-pane">

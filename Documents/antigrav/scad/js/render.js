@@ -23,7 +23,7 @@ import { injectSpeedInsights } from '@vercel/speed-insights';
 import {
   isSupabaseConfigured, signUpWithEmail, signInWithEmail, signOut, getUser, getSession, onAuthChange,
   createProject, updateProject, deleteProject as deleteCloudProject,
-  getMyProjects, getSharedProjects, shareProjectByEmail,
+  getMyProjects, getSharedProjects, shareProjectByEmail, uploadAvatar
 } from './supabase.js';
 
 
@@ -1385,6 +1385,45 @@ function initAuthGate() {
   const btnEmailSignIn = document.getElementById('btn-email-signin');
   const btnEmailSignUp = document.getElementById('btn-email-signup');
   const authStatus = document.getElementById('auth-status');
+
+  // Wire up Avatar Upload
+  const avatarWrapper = document.getElementById('btn-avatar-upload');
+  const avatarInput = document.getElementById('avatar-input');
+  
+  if (avatarWrapper && avatarInput) {
+    avatarWrapper.addEventListener('click', () => {
+      avatarInput.click();
+    });
+
+    avatarInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const overlaySpan = avatarWrapper.querySelector('.toolbar__avatar-overlay span');
+      if (overlaySpan) overlaySpan.textContent = '...';
+      avatarWrapper.classList.add('uploading');
+
+      try {
+        const publicUrl = await uploadAvatar(file);
+        const avatarImage = document.getElementById('toolbar-avatar');
+        if (avatarImage) avatarImage.src = publicUrl;
+        
+        // Update current user state with new URL
+        if (currentUser) {
+          currentUser.user_metadata = currentUser.user_metadata || {};
+          currentUser.user_metadata.avatar_url = publicUrl;
+        }
+
+        showToast('✓ Avatar updated successfully');
+      } catch (err) {
+        showToast(`✗ Failed to upload avatar: ${err.message}`);
+      } finally {
+        avatarWrapper.classList.remove('uploading');
+        if (overlaySpan) overlaySpan.textContent = '+';
+        avatarInput.value = ''; // Custom Reset
+      }
+    });
+  }
 
   function showSignInChoices() {
     if (choices) choices.style.display = 'flex';

@@ -1562,12 +1562,59 @@ kbd {
   gap: 8px;
 }
 
-.toolbar__avatar {
-  width: 26px;
-  height: 26px;
+.toolbar__avatar-wrapper {
+  position: relative;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1.5px solid var(--border-accent);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toolbar__avatar-wrapper:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.toolbar__avatar {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  transition: filter 0.2s ease;
+}
+
+.toolbar__avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.toolbar__avatar-wrapper:hover .toolbar__avatar-overlay {
+  opacity: 1;
+}
+
+.toolbar__avatar-wrapper:hover .toolbar__avatar {
+  filter: blur(1px);
+}
+
+.toolbar__avatar-wrapper.uploading .toolbar__avatar-overlay {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.toolbar__avatar-wrapper.uploading .toolbar__avatar-overlay span {
+  animation: pulse 1s infinite alternate;
 }
 
 .toolbar__user-name {

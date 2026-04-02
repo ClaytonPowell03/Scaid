@@ -71,6 +71,39 @@ export function onAuthChange(callback) {
   });
 }
 
+export async function uploadAvatar(file) {
+  if (!supabase) throw new Error('Not authenticated');
+  const user = await getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  // Unique file name: user_id/timestamp.ext
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  // Upload to avatars bucket
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { upsert: true });
+
+  if (uploadError) throw uploadError;
+
+  // Get public URL
+  const { data } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  const publicUrl = data.publicUrl;
+
+  // Update user metadata
+  const { error: updateError } = await supabase.auth.updateUser({
+    data: { avatar_url: publicUrl }
+  });
+
+  if (updateError) throw updateError;
+  return publicUrl;
+}
+
 // ── Project CRUD ─────────────────────────────────────
 
 export async function createProject(name, code) {
