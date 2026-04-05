@@ -802,25 +802,31 @@ function initHistory() {
 
 // ── Tab Switching ────────────────────────────────────
 function initTabs() {
+  const tabChat = document.getElementById('tab-chat');
   const tabCode = document.getElementById('tab-code');
   const tabConsole = document.getElementById('tab-console');
+  
+  const chatContainer = document.getElementById('chat-container');
   const editorContainer = document.getElementById('editor-container');
   const consoleContainer = document.getElementById('console-container');
 
-  tabCode.addEventListener('click', () => {
-    tabCode.classList.add('active');
-    tabConsole.classList.remove('active');
-    editorContainer.style.display = '';
-    consoleContainer.style.display = 'none';
-  });
+  function switchTab(activeTabId) {
+    tabChat.classList.toggle('active', activeTabId === 'tab-chat');
+    tabCode.classList.toggle('active', activeTabId === 'tab-code');
+    tabConsole.classList.toggle('active', activeTabId === 'tab-console');
 
-  tabConsole.addEventListener('click', () => {
-    tabConsole.classList.add('active');
-    tabCode.classList.remove('active');
-    editorContainer.style.display = 'none';
-    consoleContainer.style.display = '';
-    updateConsoleUI();
-  });
+    chatContainer.style.display = activeTabId === 'tab-chat' ? '' : 'none';
+    editorContainer.style.display = activeTabId === 'tab-code' ? '' : 'none';
+    consoleContainer.style.display = activeTabId === 'tab-console' ? '' : 'none';
+
+    if (activeTabId === 'tab-console') {
+      updateConsoleUI();
+    }
+  }
+
+  if (tabChat) tabChat.addEventListener('click', () => switchTab('tab-chat'));
+  if (tabCode) tabCode.addEventListener('click', () => switchTab('tab-code'));
+  if (tabConsole) tabConsole.addEventListener('click', () => switchTab('tab-console'));
 }
 
 function initAIChat() {
@@ -844,7 +850,28 @@ function initAIChat() {
       return;
     }
 
-    setButtonBusy('btn-ai-generate', true, 'Generating...', 'Generate');
+    const chatHistory = document.getElementById('chat-history');
+
+    if (chatHistory) {
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-message chat-message--user';
+      userBubble.textContent = prompt;
+      chatHistory.appendChild(userBubble);
+      
+      const loadingBubble = document.createElement('div');
+      loadingBubble.className = 'chat-message chat-message--assistant';
+      loadingBubble.id = 'chat-loading-bubble';
+      loadingBubble.innerHTML = '<span class="status-indicator__dot status-indicator__dot--warning" style="display:inline-block; margin-right:6px; vertical-align:middle;"></span><span style="vertical-align:middle;">Generating...</span>';
+      chatHistory.appendChild(loadingBubble);
+      
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    if (generateButton) {
+      generateButton.disabled = true;
+      generateButton.innerHTML = '...';
+    }
+    
     updateAIStatus('Asking AI... (this can take up to 4 minutes, do not be concerned)');
     consoleLog('Sending prompt to AI model', 'info');
 
@@ -857,13 +884,30 @@ function initAIChat() {
       addToHistory(prompt, result.model || 'AI', result.scadCode);
       updateAIStatus('Generated with AI.');
       chatInput.value = '';
+      
+      const loadingBubble = document.getElementById('chat-loading-bubble');
+      if (loadingBubble) {
+        loadingBubble.id = '';
+        loadingBubble.innerHTML = `✓ Generated successfully with ${result.model || 'AI'}.`;
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
     } catch (err) {
       const msg = err?.message || 'AI request failed.';
       showToast(`✕ ${msg}`);
       updateAIStatus(msg);
       consoleLog(`AI error: ${msg}`, 'error');
+      
+      const loadingBubble = document.getElementById('chat-loading-bubble');
+      if (loadingBubble) {
+        loadingBubble.id = '';
+        loadingBubble.innerHTML = `<span style="color:#f87171;">✕ ${msg}</span>`;
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+      }
     } finally {
-      setButtonBusy('btn-ai-generate', false, 'Generating...', 'Generate');
+      if (generateButton) {
+        generateButton.disabled = false;
+        generateButton.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+      }
     }
   }
 
@@ -953,11 +997,18 @@ function initAIChat() {
   }
 
   if (chatInput) {
+    // Enter sends, Shift+Enter adds newline
     chatInput.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         runGenerate();
       }
+    });
+
+    // Auto-resize textarea as user types
+    chatInput.addEventListener('input', () => {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 160) + 'px';
     });
   }
 
@@ -1505,10 +1556,12 @@ function initAuthGate() {
 }
 
 function highlightAIPanel() {
-  const aiPanel = document.getElementById('ai-mini-panel');
-  if (aiPanel) {
-    aiPanel.classList.add('highlight-pulse');
-    setTimeout(() => aiPanel.classList.remove('highlight-pulse'), 3000);
+  const chatTab = document.getElementById('tab-chat');
+  const chatContainer = document.getElementById('chat-container');
+  if (chatTab && chatContainer) {
+    chatTab.click(); // Ensure chat tab is active
+    chatContainer.classList.add('highlight-pulse');
+    setTimeout(() => chatContainer.classList.remove('highlight-pulse'), 3000);
   }
 }
 
@@ -1528,8 +1581,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIChat();
   initTemplates();
   initHistory();
-  updateAIStatus('Use quick edit for simple size changes, or AI for larger SCAD revisions.');
-  updateFaceHint('Click a face to quickly change simple dimensions or use AI for bigger edits.');
 
   // Hide loading screen
   hideLoadingScreen();
