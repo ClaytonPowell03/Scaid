@@ -850,6 +850,10 @@ function initAIChat() {
       return;
     }
 
+    // Clear input immediately to fix the text lingering glitch
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+
     const chatHistory = document.getElementById('chat-history');
 
     if (chatHistory) {
@@ -883,12 +887,11 @@ function initAIChat() {
       applyGeneratedCode(result.scadCode, result.model || 'AI');
       addToHistory(prompt, result.model || 'AI', result.scadCode);
       updateAIStatus('Generated with AI.');
-      chatInput.value = '';
       
       const loadingBubble = document.getElementById('chat-loading-bubble');
       if (loadingBubble) {
         loadingBubble.id = '';
-        loadingBubble.innerHTML = `✓ Generated successfully with ${result.model || 'AI'}.`;
+        loadingBubble.innerHTML = `✓ Generated successfully with AI.`;
         chatHistory.scrollTop = chatHistory.scrollHeight;
       }
     } catch (err) {
