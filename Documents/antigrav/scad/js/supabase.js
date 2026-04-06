@@ -265,7 +265,7 @@ export async function uploadGalleryThumbnail(file) {
   return data.publicUrl;
 }
 
-export async function publishToGallery(title, description, scadCode, thumbnailUrl = null) {
+export async function publishToGallery(title, description, scadCode, thumbnailUrl = null, authorName = 'Anonymous') {
   if (!supabase) throw new Error('Not authenticated');
   const user = await getUser();
   if (!user) throw new Error('Not authenticated');
@@ -274,6 +274,7 @@ export async function publishToGallery(title, description, scadCode, thumbnailUr
     .from('gallery')
     .insert({
       owner_id: user.id,
+      author_name: authorName,
       title,
       description,
       scad_code: scadCode,

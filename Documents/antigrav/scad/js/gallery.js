@@ -53,6 +53,7 @@ function buildCardHtml(item) {
   
   // Minimal escaped markup
   const title = encodeHtml(item.title || 'Untitled');
+  const author = encodeHtml(item.author_name || 'Anonymous');
   const desc = encodeHtml(item.description || 'No description provided.');
   const imageHtml = item.thumbnail_url 
     ? `<img src="${item.thumbnail_url}" alt="${title}" class="gallery-card__image" loading="lazy" />`
@@ -69,7 +70,7 @@ function buildCardHtml(item) {
         <h2 class="gallery-card__title">${title}</h2>
         <div class="gallery-card__author">
           <div class="gallery-card__author-avatar"></div>
-          <span>Community Member</span>
+          <span>${author}</span>
         </div>
         <p class="gallery-card__description">${desc}</p>
         <div class="gallery-card__footer">

@@ -1606,6 +1606,7 @@ function initGalleryPublish() {
   const publishBtn = document.getElementById('btn-publish');
   const publishMenu = document.getElementById('publish-menu');
   const publishSubmit = document.getElementById('btn-publish-submit');
+  const nicknameInput = document.getElementById('publish-nickname');
   const titleInput = document.getElementById('publish-title');
   const descInput = document.getElementById('publish-desc');
 
@@ -1643,6 +1644,9 @@ function initGalleryPublish() {
     titleInput.value = inferredTitle;
     descInput.value = '';
     
+    // Auto-fill nickname if they have a user name, else leave blank
+    nicknameInput.value = user.user_metadata?.name || '';
+    
     // 3. Keep other dropdowns closed, open this one
     document.querySelectorAll('.export-dropdown.open').forEach(el => el.classList.remove('open'));
     publishDropdown.classList.add('open');
@@ -1661,6 +1665,7 @@ function initGalleryPublish() {
   });
 
   publishSubmit.addEventListener('click', async () => {
+    const nickname = nicknameInput.value.trim() || 'Anonymous';
     const title = titleInput.value.trim();
     const desc = descInput.value.trim();
     if (!title) {
@@ -1688,7 +1693,7 @@ function initGalleryPublish() {
       }
 
       showToast('Publishing design...');
-      await publishToGallery(title, desc, code, thumbnailUrl);
+      await publishToGallery(title, desc, code, thumbnailUrl, nickname);
 
       showToast('✓ Published to Gallery!');
       publishDropdown.classList.remove('open');

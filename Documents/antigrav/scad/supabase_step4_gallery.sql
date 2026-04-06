@@ -7,6 +7,7 @@
 create table if not exists public.gallery (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
+  author_name text default 'Anonymous',
   title text not null default 'Untitled Design',
   description text default '',
   scad_code text not null default '',
