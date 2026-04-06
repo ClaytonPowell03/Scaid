@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenSCAD Guide for AI CAD and 3D Printing | scAId</title>
+  <meta name="description" content="Learn what a SCAD file is, how OpenSCAD fits AI CAD workflows, and how to move from parametric code to STL files for 3D printing with scAId." />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="https://scaid.tech/openscad-guide.html" />
+  <meta name="theme-color" content="#09090b" />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="scAId" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content="OpenSCAD Guide for AI CAD and 3D Printing | scAId" />
+  <meta property="og:description" content="A practical guide to SCAD files, browser-based OpenSCAD workflows, AI CAD, and STL export for 3D printing." />
+  <meta property="og:url" content="https://scaid.tech/openscad-guide.html" />
+  <meta property="og:image" content="https://scaid.tech/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="OpenSCAD guide for AI CAD, SCAD files, and 3D printing" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OpenSCAD Guide for AI CAD and 3D Printing | scAId" />
+  <meta name="twitter:description" content="Learn SCAD files, parametric CAD concepts, AI-assisted OpenSCAD workflows, and SCAD-to-STL export." />
+  <meta name="twitter:image" content="https://scaid.tech/og-image.png" />
+  <meta name="twitter:image:alt" content="OpenSCAD guide for AI CAD, SCAD files, and 3D printing" />
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/landing.css" />
+  <link rel="stylesheet" href="/css/guide.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "@id": "https://scaid.tech/openscad-guide.html#article",
+        "headline": "OpenSCAD guide for AI CAD and 3D printing",
+        "description": "A practical guide to SCAD files, browser-based OpenSCAD workflows, AI CAD, and STL export for 3D printing.",
+        "author": {
+          "@type": "Organization",
+          "name": "scAId"
+        },
+        "publisher": {
+          "@id": "https://scaid.tech/#organization"
+        },
+        "dateModified": "2026-04-06",
+        "mainEntityOfPage": "https://scaid.tech/openscad-guide.html",
+        "about": [
+          "OpenSCAD",
+          "SCAD files",
+          "Parametric CAD",
+          "AI CAD",
+          "3D printing"
+        ]
+      },
+      {
+        "@type": "HowTo",
+        "@id": "https://scaid.tech/openscad-guide.html#howto",
+        "name": "How to go from SCAD code to an STL file for 3D printing",
+        "description": "A four-step workflow for creating parametric CAD in SCAD and exporting it as an STL for printing.",
+        "totalTime": "PT10M",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Define the part",
+            "text": "Start with a text prompt, a template, or hand-written OpenSCAD code. Focus on dimensions, clearances, and the main primitives needed for the part."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Make it parametric",
+            "text": "Turn critical dimensions into variables so the part can be resized or adapted for different printers, hardware sizes, or mounting patterns."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Preview and inspect",
+            "text": "Render the geometry in the browser, inspect boolean cuts and face positions, and adjust the source until the model is ready."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Export STL",
+            "text": "Export the final geometry as an STL file, load it into a slicer such as Cura or PrusaSlicer, and tune print settings for the material and machine."
+          }
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://scaid.tech/openscad-guide.html#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://scaid.tech/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "OpenSCAD Guide",
+            "item": "https://scaid.tech/openscad-guide.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="guide-page">
+  <nav class="navbar guide-navbar" aria-label="Main navigation">
+    <a href="/" class="navbar__logo" aria-label="scAId home">
+      <img src="/logo.png" alt="scAId logo" class="navbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
+      scAId
+    </a>
+    <ul class="navbar__links">
+      <li><a href="/">Home</a></li>
+      <li><a href="render.html">Editor</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="openscad-guide.html" aria-current="page">Guide</a></li>
+    </ul>
+  </nav>
+
+  <main class="guide-main">
+    <section class="guide-hero">
+      <div class="guide-hero__inner">
+        <nav class="guide-breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <span>/</span>
+          <span>OpenSCAD Guide</span>
+        </nav>
+        <p class="guide-hero__eyebrow">OpenSCAD, SCAD files, AI CAD, and 3D printing</p>
+        <h1>A practical OpenSCAD guide for AI-assisted CAD and printable parts</h1>
+        <p class="guide-hero__lead">If you are searching for an OpenSCAD online editor, trying to understand what a <code>.scad</code> file does, or looking for a cleaner path from parametric code to STL export, this page gives you the basics in one place.</p>
+        <div class="guide-hero__actions">
+          <a href="render.html" class="btn btn-primary">Open the editor</a>
+          <a href="gallery.html" class="btn btn-ghost">Browse examples</a>
+        </div>
+        <div class="guide-facts">
+          <div class="guide-fact">
+            <strong>SCAD files</strong>
+            <span>Text-based source for OpenSCAD and similar code-first modeling workflows.</span>
+          </div>
+          <div class="guide-fact">
+            <strong>Best fit</strong>
+            <span>Brackets, enclosures, fixtures, adapters, mounts, and other repeatable parametric parts.</span>
+          </div>
+          <div class="guide-fact">
+            <strong>Output</strong>
+            <span>Preview in browser, then export STL or OBJ for slicers, sharing, or downstream CAD.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <article class="guide-shell">
+      <aside class="guide-toc">
+        <h2>On this page</h2>
+        <a href="#scad-file">What is a SCAD file?</a>
+        <a href="#why-openscad">Why OpenSCAD works well for AI CAD</a>
+        <a href="#stl-workflow">How to go from SCAD to STL</a>
+        <a href="#terms">Key terms worth knowing</a>
+        <a href="#example">OpenSCAD example</a>
+        <a href="#use-cases">Best use cases</a>
+        <a href="#comparison">Browser CAD vs desktop CAD</a>
+      </aside>
+
+      <div class="guide-content">
+        <section class="guide-section" id="scad-file">
+          <h2>What is a SCAD file?</h2>
+          <p>A SCAD file is a plain-text source file that describes geometry using code rather than direct mouse-driven modeling. In the OpenSCAD ecosystem, a <code>.scad</code> file usually contains variables, modules, loops, and boolean operations that define a model in a repeatable way.</p>
+          <p>That is important for searchers comparing formats: a SCAD file is not the same thing as an STL. The SCAD file is the editable source. The STL is the exported mesh that most slicers and printers expect. In practice, people often search for both because they want to tweak dimensions in code and then export the final part for printing.</p>
+          <div class="guide-note">
+            <strong>Short version:</strong> use SCAD when you want editable, parametric source. Use STL when you want a printable result.
+          </div>
+        </section>
+
+        <section class="guide-section" id="why-openscad">
+          <h2>Why OpenSCAD still works so well for AI CAD</h2>
+          <p>OpenSCAD is unusually compatible with AI-assisted design because the medium is already text. A model can be described as code, revised line by line, reviewed in version control, and regenerated with different dimensions without rebuilding the whole part by hand.</p>
+          <p>That makes OpenSCAD especially good for workflows where you want to describe a bracket, mount, enclosure, spacer, or fixture in plain English, let AI draft the first version, then keep the geometry grounded in variables and explicit operations. It is a strong fit for browser CAD because the code is compact, auditable, and easier to edit than a black-box mesh.</p>
+        </section>
+
+        <section class="guide-section" id="stl-workflow">
+          <h2>How to go from a text prompt or SCAD code to an STL file</h2>
+          <div class="guide-steps">
+            <article class="guide-step">
+              <span>1</span>
+              <div>
+                <h3>Start with intent, not just shape</h3>
+                <p>Define what the part does, the dimensions that matter, and any clearances or mounting rules. Prompts work better when they mention use, hardware size, and expected print orientation.</p>
+              </div>
+            </article>
+            <article class="guide-step">
+              <span>2</span>
+              <div>
+                <h3>Turn important dimensions into variables</h3>
+                <p>Parametric values let you resize a hole pattern, change wall thickness, or adapt a design for another printer or component without rewriting the whole model.</p>
+              </div>
+            </article>
+            <article class="guide-step">
+              <span>3</span>
+              <div>
+                <h3>Preview and inspect the geometry</h3>
+                <p>Render the part, look for collisions or weak walls, and verify that differences, unions, and intersections did what you intended before you export.</p>
+              </div>
+            </article>
+            <article class="guide-step">
+              <span>4</span>
+              <div>
+                <h3>Export STL for slicing and printing</h3>
+                <p>Once the source looks correct, export an STL and move it into Cura, PrusaSlicer, OrcaSlicer, or another tool for print settings, supports, and machine-specific tuning.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="guide-section" id="terms">
+          <h2>Key terms worth knowing</h2>
+          <div class="guide-table" role="table" aria-label="Glossary of OpenSCAD and 3D printing terms">
+            <div class="guide-table__row guide-table__row--head" role="row">
+              <span role="columnheader">Term</span>
+              <span role="columnheader">Meaning</span>
+              <span role="columnheader">Why it matters</span>
+            </div>
+            <div class="guide-table__row" role="row">
+              <span role="cell">OpenSCAD</span>
+              <span role="cell">A code-first CAD tool built around declarative geometry.</span>
+              <span role="cell">Excellent for repeatable parts, scripts, and parametric edits.</span>
+            </div>
+            <div class="guide-table__row" role="row">
+              <span role="cell">SCAD file</span>
+              <span role="cell">The editable text source that defines the model.</span>
+              <span role="cell">Lets you modify dimensions and logic instead of editing a fixed mesh.</span>
+            </div>
+            <div class="guide-table__row" role="row">
+              <span role="cell">STL</span>
+              <span role="cell">A triangle mesh format commonly used for 3D printing.</span>
+              <span role="cell">Most slicers accept STL as the handoff format for printers.</span>
+            </div>
+            <div class="guide-table__row" role="row">
+              <span role="cell">Parametric CAD</span>
+              <span role="cell">Modeling where dimensions and relationships are expressed as variables or rules.</span>
+              <span role="cell">Makes a part adaptable across printer tolerances, hardware sizes, and revisions.</span>
+            </div>
+            <div class="guide-table__row" role="row">
+              <span role="cell">CSG</span>
+              <span role="cell">Constructive solid geometry using operations like union, difference, and intersection.</span>
+              <span role="cell">This is how many OpenSCAD parts are assembled from simpler primitives.</span>
+            </div>
+            <div class="guide-table__row" role="row">
+              <span role="cell">Tolerance / clearance</span>
+              <span role="cell">Extra spacing built into a design for fit after printing.</span>
+              <span role="cell">Critical for real-world parts, especially snap fits, lids, inserts, and screw holes.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="guide-section" id="example">
+          <h2>OpenSCAD example: a simple mounting bracket</h2>
+          <p>This is the kind of model that code-first CAD handles well: a part with clear dimensions, repeating structure, and an obvious relationship between holes, width, and thickness.</p>
+          <pre class="guide-code"><code>width = 60;
+height = 30;
+thickness = 4;
+hole_diameter = 5;
+hole_offset = 18;
+
+difference() {
+  cube([width, height, thickness], center = true);
+
+  for (x = [-hole_offset, hole_offset]) {
+    translate([x, 0, 0])
+      cylinder(h = thickness + 2, d = hole_diameter, center = true, $fn = 48);
+  }
+}</code></pre>
+          <p>If you later need a bigger bracket or different bolt spacing, you change variables instead of remodeling the part. That is one reason OpenSCAD stays useful even when richer desktop CAD tools are available.</p>
+        </section>
+
+        <section class="guide-section" id="use-cases">
+          <h2>Where browser-based OpenSCAD shines</h2>
+          <div class="guide-card-grid">
+            <article class="guide-card">
+              <h3>3D-printing brackets and mounts</h3>
+              <p>Fast to describe, easy to resize, and easy to re-export when hardware dimensions change.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Enclosures and adapters</h3>
+              <p>Parametric wall thicknesses, hole placements, and clearances are easier to manage in code.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Robotics and electronics fixtures</h3>
+              <p>Sensor brackets, board standoffs, cable guides, and mounting plates often map cleanly to CSG operations.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Classroom and maker education</h3>
+              <p>Students can learn geometry, variables, loops, and design logic without installing heavy desktop software.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="guide-section" id="comparison">
+          <h2>When to use a browser CAD tool vs a traditional desktop CAD package</h2>
+          <p>Browser-based OpenSCAD is ideal when speed, accessibility, and repeatable source matter more than complex assemblies or manufacturing drawings. It is a strong choice for rapid prototyping, print-focused part iteration, and educational use.</p>
+          <p>Desktop CAD still wins when you need advanced constraints, production-ready documentation, integrated CAM, or large mechanical assemblies. The tradeoff is that many quick 3D-printing parts do not need all of that overhead. For those cases, a tool like scAId can get you from idea to STL much faster.</p>
+        </section>
+
+        <section class="guide-section">
+          <h2>Common questions</h2>
+          <div class="guide-faq">
+            <article>
+              <h3>Can I edit existing SCAD files in the browser?</h3>
+              <p>Yes. A browser editor can be a convenient way to inspect and tweak source without opening a desktop application first.</p>
+            </article>
+            <article>
+              <h3>Is AI CAD good enough for final parts?</h3>
+              <p>It is best viewed as an accelerator. AI is useful for first drafts and repetitive edits, but engineering judgment still matters for strength, fit, and printability.</p>
+            </article>
+            <article>
+              <h3>Why not export straight to STL and skip SCAD?</h3>
+              <p>Keeping the source means future changes are easier. If you lose the parametric logic, even small dimensional updates become more painful.</p>
+            </article>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <section class="guide-cta">
+      <div class="guide-cta__inner">
+        <h2>Try the workflow in the browser</h2>
+        <p>Open the editor to write or generate SCAD, preview the part, and export STL files for 3D printing. If you want inspiration first, the gallery is a good place to start.</p>
+        <div class="guide-hero__actions">
+          <a href="render.html" class="btn btn-primary">Open Editor</a>
+          <a href="gallery.html" class="btn btn-ghost">Browse Gallery</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <a href="/" class="navbar__logo" style="font-size:1rem;" aria-label="scAId home">
+          <img src="/logo.png" alt="scAId logo" class="navbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
+          scAId
+        </a>
+        <p class="footer__about">Browser-based AI CAD and OpenSCAD workflows for fast parametric modeling and STL export.</p>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Product</h4>
+        <a href="render.html">Editor</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="/">Homepage</a>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Guide Topics</h4>
+        <a href="#scad-file">SCAD files</a>
+        <a href="#stl-workflow">SCAD to STL</a>
+        <a href="#use-cases">3D printing use cases</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span class="footer__copy">© 2026 scAId — OpenSCAD and AI CAD guide</span>
+    </div>
+  </footer>
+</body>
+</html>

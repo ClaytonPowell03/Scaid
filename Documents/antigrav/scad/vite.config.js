@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
           main: resolve(__dirname, 'index.html'),
           render: resolve(__dirname, 'render.html'),
           gallery: resolve(__dirname, 'gallery.html'),
+          guide: resolve(__dirname, 'openscad-guide.html'),
         },
       },
     },

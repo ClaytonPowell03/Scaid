@@ -3,23 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>scAId Gallery — Explore Community 3D Models</title>
-  <meta name="description" content="Explore AI-generated 3D models and CAD blueprints created by the scAId community." />
+  <title>scAId Gallery | Community OpenSCAD Models and 3D Printing Ideas</title>
+  <meta name="description" content="Browse community OpenSCAD models, AI-assisted CAD experiments, and 3D-printing-ready design ideas created with scAId." />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="https://scaid.tech/gallery.html" />
+  <meta name="theme-color" content="#09090b" />
   <link rel="icon" type="image/png" href="/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="scAId" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content="scAId Gallery | Community OpenSCAD Models and CAD Concepts" />
+  <meta property="og:description" content="Explore public CAD models, OpenSCAD examples, and 3D-printing ideas from the scAId community." />
+  <meta property="og:url" content="https://scaid.tech/gallery.html" />
+  <meta property="og:image" content="https://scaid.tech/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Community CAD models and OpenSCAD examples in the scAId gallery" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="scAId Gallery | Community OpenSCAD Models and CAD Concepts" />
+  <meta name="twitter:description" content="See public OpenSCAD projects, AI CAD experiments, and 3D-printing-ready design ideas built with scAId." />
+  <meta name="twitter:image" content="https://scaid.tech/og-image.png" />
+  <meta name="twitter:image:alt" content="Community CAD models and OpenSCAD examples in the scAId gallery" />
   
   <link rel="stylesheet" href="/css/global.css" />
   <link rel="stylesheet" href="/css/landing.css" />
   <link rel="stylesheet" href="/css/gallery.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://scaid.tech/gallery.html#webpage",
+        "url": "https://scaid.tech/gallery.html",
+        "name": "scAId Gallery",
+        "description": "Community OpenSCAD models, AI-generated CAD concepts, and 3D-printing design ideas published from scAId.",
+        "isPartOf": {
+          "@id": "https://scaid.tech/#website"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://scaid.tech/gallery.html#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://scaid.tech/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Gallery",
+            "item": "https://scaid.tech/gallery.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
-<body>
+<body class="gallery-page">
   <!-- ─── Navbar ─────────────────────────────────── -->
-  <nav class="navbar" id="navbar">
+  <nav class="navbar" id="navbar" aria-label="Main navigation">
     <a href="/" class="navbar__logo">
       <img src="/logo.png" alt="scAId logo" class="navbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
       scAId
     </a>
     <ul class="navbar__links">
       <li><a href="/">Home</a></li>
+      <li><a href="openscad-guide.html">Guide</a></li>
       <li><a href="gallery.html" class="active">Gallery</a></li>
       <li><a href="render.html" class="btn btn-secondary nav-cta">Open Editor</a></li>
     </ul>
@@ -41,6 +95,27 @@
   <!-- ─── Gallery Grid ────────────────────────────── -->
   <main class="gallery-main section">
     <div class="container">
+      <section class="gallery-intro" aria-labelledby="gallery-intro-title">
+        <div class="gallery-intro__header">
+          <h2 id="gallery-intro-title">What you will find in the scAId gallery</h2>
+          <p>The gallery gives visitors and search engines more context than a pure feed of cards. It highlights the kinds of OpenSCAD examples and 3D-printing workflows that show up most often in the community.</p>
+        </div>
+        <div class="gallery-intro__grid">
+          <article class="gallery-intro__card">
+            <h3>3D-printable parts</h3>
+            <p>Browse brackets, mounts, enclosures, adapters, cable clips, and other maker parts that can move from SCAD code to STL export quickly.</p>
+          </article>
+          <article class="gallery-intro__card">
+            <h3>OpenSCAD examples</h3>
+            <p>Use gallery projects as reference material for modules, variables, loops, boolean operations, and other parametric CAD techniques that work well in OpenSCAD.</p>
+          </article>
+          <article class="gallery-intro__card">
+            <h3>AI-assisted CAD ideas</h3>
+            <p>See how natural-language prompting can kickstart CAD concepts before you refine the geometry manually for fit, tolerances, and printability.</p>
+          </article>
+        </div>
+      </section>
+
       <div id="gallery-loading" class="gallery-loading">
         <div class="spinner"></div>
         <p>Loading community designs...</p>
@@ -57,6 +132,33 @@
       </div>
     </div>
   </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <a href="/" class="navbar__logo" style="font-size:1rem;" aria-label="scAId home">
+          <img src="/logo.png" alt="scAId logo" class="navbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
+          scAId
+        </a>
+        <p class="footer__about">Community OpenSCAD examples, AI CAD concepts, and 3D-printing project inspiration from the scAId ecosystem.</p>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Explore</h4>
+        <a href="/">Home</a>
+        <a href="openscad-guide.html">OpenSCAD Guide</a>
+        <a href="render.html">Open Editor</a>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Topics</h4>
+        <a href="openscad-guide.html#scad-file">What is a SCAD file?</a>
+        <a href="openscad-guide.html#stl-workflow">SCAD to STL workflow</a>
+        <a href="openscad-guide.html#use-cases">3D printing use cases</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span class="footer__copy">© 2026 scAId — Community CAD gallery</span>
+    </div>
+  </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.7/gsap.min.js"></script>
   <script type="module" src="/js/gallery.js"></script>

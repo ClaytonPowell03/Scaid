@@ -519,6 +519,74 @@
 }
 
 /* ── CTA ──────────────────────────────────────────── */
+.learn-hub {
+  padding: 80px 48px 40px;
+  border-top: 1px solid #1a1a1f;
+}
+.learn-hub__header {
+  max-width: 760px;
+  margin: 0 auto 36px;
+  text-align: center;
+}
+.learn-hub__header h2 {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  color: #ededed;
+  margin-bottom: 14px;
+}
+.learn-hub__header p {
+  font-size: 0.98rem;
+  color: #6f6f84;
+  line-height: 1.7;
+}
+.learn-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+.learn-hub__card {
+  padding: 28px;
+  background: linear-gradient(180deg, rgba(17,17,24,0.92) 0%, rgba(10,10,15,0.92) 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 24px;
+  box-shadow: var(--shadow-card);
+}
+.learn-hub__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-cyan);
+}
+.learn-hub__card h3 {
+  font-size: 1.25rem;
+  color: #f3f3f8;
+  margin-bottom: 12px;
+}
+.learn-hub__card p {
+  color: #7b7b91;
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+.learn-hub__card code {
+  font-family: var(--font-mono);
+  color: var(--accent-cyan);
+}
+.learn-hub__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #f1f1f6;
+}
+.learn-hub__link:hover {
+  color: var(--accent-cyan);
+}
+
 .cta {
   padding: 120px 48px; text-align: center;
   border-top: 1px solid #1a1a1f;
@@ -576,6 +644,7 @@
   .features__grid { grid-template-columns: 1fr 1fr; }
   .feature-hero { grid-column: 1 / -1; }
   .use-cases__grid { grid-template-columns: 1fr 1fr; }
+  .learn-hub__grid { grid-template-columns: 1fr; }
   .workflow__steps { flex-direction: column; gap: 24px; }
   .workflow-step__line { width: 1px; height: 24px; align-self: flex-start; margin-left: 16px; }
   .footer__inner { grid-template-columns: 1fr 1fr; }
@@ -606,6 +675,7 @@
   .showcase__metrics { gap: 24px; }
 
   .faq { padding: 80px 20px 60px; }
+  .learn-hub { padding: 80px 20px 24px; }
 
   .cta { padding: 80px 20px; }
 

@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- ─── Primary SEO ──────────────────────────────── -->
-  <title>scAId — Free AI Text-to-CAD Tool | Browser-Based 3D Modeling & STL Export</title>
-  <meta name="description" content="scAId is a free, AI-powered text-to-CAD tool that runs entirely in your browser. Write OpenSCAD code or describe models in plain English, preview in real-time 3D, and export STL files for 3D printing. No install required." />
-  <meta name="keywords" content="text to CAD, AI CAD tool, browser-based 3D modeling, online CAD editor, free 3D modeling software, OpenSCAD online, parametric design, STL export, AI 3D model generator, CAD for 3D printing, text to STL, text to 3D model, constructive solid geometry, free CAD software, CAD without install, generative CAD, AI parametric modeling" />
+  <title>scAId | AI Text-to-CAD & OpenSCAD Online Editor for 3D Printing</title>
+  <meta name="description" content="scAId is a free AI text-to-CAD tool and OpenSCAD online editor. Write SCAD code or describe parts in plain English, preview 3D models instantly in your browser, and export STL files for 3D printing." />
   <meta name="author" content="scAId" />
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
   <link rel="canonical" href="https://scaid.tech/" />
@@ -17,8 +16,9 @@
   <!-- ─── Open Graph (Facebook, LinkedIn, Discord) ── -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="scAId" />
-  <meta property="og:title" content="scAId — Free AI Text-to-CAD Tool | 3D Modeling in Your Browser" />
-  <meta property="og:description" content="Design 3D models by writing code or describing them in plain English. Real-time preview, CSG booleans, one-click STL export. No install, no signup, 100% free." />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content="scAId | AI Text-to-CAD & OpenSCAD Online Editor" />
+  <meta property="og:description" content="Create parametric 3D models from text or SCAD code, preview them in your browser, and export STL files for 3D printing with scAId." />
   <meta property="og:url" content="https://scaid.tech/" />
   <meta property="og:image" content="https://scaid.tech/og-image.png" />
   <meta property="og:image:width" content="1200" />
@@ -27,8 +27,8 @@
 
   <!-- ─── Twitter / X Card ─────────────────────────── -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="scAId — Free AI Text-to-CAD Tool" />
-  <meta name="twitter:description" content="Write code or plain English to generate 3D models. Real-time preview, STL export, zero install. Try it free." />
+  <meta name="twitter:title" content="scAId | AI Text-to-CAD & OpenSCAD Online Editor" />
+  <meta name="twitter:description" content="Write SCAD code or describe a model in plain English, preview it instantly, and export STL files for 3D printing." />
   <meta name="twitter:image" content="https://scaid.tech/og-image.png" />
   <meta name="twitter:image:alt" content="scAId — AI-powered text-to-CAD tool" />
 
@@ -57,6 +57,8 @@
         "@id": "https://scaid.tech/#website",
         "url": "https://scaid.tech",
         "name": "scAId",
+        "description": "scAId is a browser-based AI CAD tool and OpenSCAD editor for parametric 3D modeling and STL export.",
+        "inLanguage": "en-US",
         "publisher": { "@id": "https://scaid.tech/#organization" }
       },
       {
@@ -242,6 +244,7 @@
     <ul class="navbar__links">
       <li><a href="#features">Features</a></li>
       <li><a href="#use-cases">Use Cases</a></li>
+      <li><a href="openscad-guide.html">Guide</a></li>
       <li><a href="#workflow">Workflow</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li><a href="gallery.html">Gallery</a></li>
@@ -255,6 +258,7 @@
   <div class="mobile-nav" id="mobile-nav">
     <a href="#features" class="mobile-nav__link">Features</a>
     <a href="#use-cases" class="mobile-nav__link">Use Cases</a>
+    <a href="openscad-guide.html" class="mobile-nav__link">Guide</a>
     <a href="#workflow" class="mobile-nav__link">Workflow</a>
     <a href="#faq" class="mobile-nav__link">FAQ</a>
     <a href="render.html" class="btn btn-primary mobile-nav__cta">Open Editor →</a>
@@ -657,6 +661,33 @@
   </section>
 
   <!-- ─── CTA ────────────────────────────────────── -->
+  <section class="learn-hub" id="learn">
+    <div class="learn-hub__header">
+      <h2 class="fade-in">Learn OpenSCAD, SCAD files, and AI CAD workflows</h2>
+      <p class="fade-in">The homepage explains the product. These deeper entry points target the narrower searches real makers and engineers use when they want browser CAD, OpenSCAD help, or a fast SCAD-to-STL workflow.</p>
+    </div>
+    <div class="learn-hub__grid">
+      <article class="learn-hub__card fade-in">
+        <span class="learn-hub__eyebrow">OpenSCAD Guide</span>
+        <h3>Understand SCAD files, parametric modeling, and browser-based CAD</h3>
+        <p>Read a practical guide to OpenSCAD, learn what a <code>.scad</code> file does, and see why text-based CAD works well for brackets, fixtures, enclosures, classroom projects, and repeatable engineering parts.</p>
+        <a href="openscad-guide.html" class="learn-hub__link page-link">Read the guide →</a>
+      </article>
+      <article class="learn-hub__card fade-in">
+        <span class="learn-hub__eyebrow">SCAD to STL</span>
+        <h3>Open the editor to go from code or prompts to printable geometry</h3>
+        <p>Use the browser editor to write OpenSCAD, generate CAD with AI, inspect geometry in real time, and export STL or OBJ files for Cura, PrusaSlicer, Bambu Studio, and other slicers.</p>
+        <a href="render.html" class="learn-hub__link page-link">Launch the editor →</a>
+      </article>
+      <article class="learn-hub__card fade-in">
+        <span class="learn-hub__eyebrow">Community Models</span>
+        <h3>Browse public CAD examples and 3D-printable project ideas</h3>
+        <p>Explore community designs for brackets, gadgets, robotics parts, and other maker projects, then open them directly in the editor to study or remix the source.</p>
+        <a href="gallery.html" class="learn-hub__link page-link">Browse the gallery →</a>
+      </article>
+    </div>
+  </section>
+
   <section class="cta" id="cta">
     <div class="cta__content">
       <h2 class="fade-in">Start building — it's free</h2>
@@ -686,6 +717,8 @@
       </div>
       <div class="footer__col">
         <h4 class="footer__col-title">Resources</h4>
+        <a href="openscad-guide.html">OpenSCAD &amp; SCAD Guide</a>
+        <a href="gallery.html">Model Gallery</a>
         <a href="#faq">FAQ</a>
         <a href="#comparison">scAId vs Traditional CAD</a>
         <a href="#about">What is Text-to-CAD?</a>

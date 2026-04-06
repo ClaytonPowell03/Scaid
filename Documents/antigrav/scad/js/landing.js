@@ -2,13 +2,54 @@
    SCAD Studio — Landing Page JS (v5: clean, no slop)
    ═══════════════════════════════════════════════════════ */
 
-import * as THREE from 'three';
 import gsap from 'gsap';
 import { inject } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
 
-inject();
-injectSpeedInsights();
+let threeModulePromise;
+
+function loadThreeModule() {
+  if (!threeModulePromise) {
+    threeModulePromise = import('three');
+  }
+  return threeModulePromise;
+}
+
+function runWhenIdle(task, timeout = 1200) {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => task(), { timeout });
+    return;
+  }
+  window.setTimeout(task, 16);
+}
+
+function initWhenVisible(target, init, options = { rootMargin: '180px 0px', threshold: 0.01 }) {
+  const element = typeof target === 'string' ? document.querySelector(target) : target;
+  if (!element) return;
+
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    Promise.resolve(init()).catch(() => {});
+  };
+
+  const observer = new IntersectionObserver(entries => {
+    if (entries.some(entry => entry.isIntersecting)) {
+      observer.disconnect();
+      start();
+    }
+  }, options);
+
+  observer.observe(element);
+}
+
+function initAnalytics() {
+  runWhenIdle(() => {
+    inject();
+    injectSpeedInsights();
+  }, 2000);
+}
 
 // ── Particles ────────────────────────────────────────
 async function initParticles() {
@@ -42,9 +83,10 @@ async function initParticles() {
 }
 
 // ── Hero 3D Scene ────────────────────────────────────
-function initHeroScene() {
+async function initHeroScene() {
   const canvas = document.getElementById('hero-three-canvas');
   if (!canvas) return;
+  const THREE = await loadThreeModule();
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -127,9 +169,10 @@ function initHeroScene() {
 }
 
 // ── Feature 3D Scene (in the split-screen card) ──────
-function initFeatureScene() {
+async function initFeatureScene() {
   const canvas = document.getElementById('feature-scene-canvas');
   if (!canvas) return;
+  const THREE = await loadThreeModule();
 
   const container = canvas.parentElement;
   const w = container.clientWidth || 500;
@@ -219,9 +262,10 @@ function initFeatureScene() {
 }
 
 // ── Showcase Scene ───────────────────────────────────
-function initShowcaseScene() {
+async function initShowcaseScene() {
   const canvas = document.getElementById('showcase-canvas');
   if (!canvas) return;
+  const THREE = await loadThreeModule();
 
   const container = canvas.parentElement;
   const w = container.clientWidth, h = container.clientHeight;
@@ -411,10 +455,7 @@ function hideLoading() {
 
 // ── Init ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initParticles();
-  initHeroScene();
-  initFeatureScene();
-  initShowcaseScene();
+  initAnalytics();
   initAnimations();
   initNavbar();
   initSmoothScroll();
@@ -422,4 +463,12 @@ document.addEventListener('DOMContentLoaded', () => {
   initCounters();
   initPageTransitions();
   hideLoading();
+
+  runWhenIdle(() => {
+    initParticles();
+    initHeroScene();
+  }, 1200);
+
+  initWhenVisible('#feature-scene-canvas', initFeatureScene);
+  initWhenVisible('#showcase-canvas', initShowcaseScene);
 });

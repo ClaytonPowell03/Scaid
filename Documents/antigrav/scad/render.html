@@ -3,11 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>scAId — Editor</title>
-  <meta name="description" content="Write SCAD code and preview 3D models in real-time with scAId's powerful browser-based editor." />
+  <title>scAId OpenSCAD Editor | AI CAD, SCAD to STL, Browser 3D Modeling</title>
+  <meta name="description" content="Use scAId's browser-based OpenSCAD editor to write SCAD code, generate CAD with AI, preview geometry in real time, and export STL files for 3D printing." />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="https://scaid.tech/render.html" />
+  <meta name="theme-color" content="#09090b" />
   <link rel="icon" type="image/png" href="/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="scAId" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:title" content="scAId OpenSCAD Editor | AI CAD and SCAD to STL" />
+  <meta property="og:description" content="Write or generate SCAD code, preview parametric CAD instantly, and export STL files for slicers and 3D printers." />
+  <meta property="og:url" content="https://scaid.tech/render.html" />
+  <meta property="og:image" content="https://scaid.tech/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="scAId browser-based OpenSCAD editor and AI CAD tool" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="scAId OpenSCAD Editor | AI CAD and SCAD to STL" />
+  <meta name="twitter:description" content="Browser-based OpenSCAD editor with AI prompting, real-time preview, and STL export for 3D printing." />
+  <meta name="twitter:image" content="https://scaid.tech/og-image.png" />
+  <meta name="twitter:image:alt" content="scAId browser-based OpenSCAD editor and AI CAD tool" />
   <link rel="stylesheet" href="/css/global.css" />
   <link rel="stylesheet" href="/css/render.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://scaid.tech/render.html#app",
+        "name": "scAId Editor",
+        "url": "https://scaid.tech/render.html",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Web Browser",
+        "description": "Browser-based OpenSCAD editor with AI text-to-CAD assistance, real-time 3D preview, and STL export for 3D printing.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "OpenSCAD-compatible code editor",
+          "AI-generated SCAD prompts",
+          "Real-time 3D preview",
+          "STL and OBJ export",
+          "Parametric editing",
+          "Gallery publishing"
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://scaid.tech/render.html#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://scaid.tech/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Editor",
+            "item": "https://scaid.tech/render.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -25,7 +90,7 @@
     </div>
   </div>
 
-  <div class="render-app">
+  <main class="render-app">
 
     <!-- ─── Toolbar ──────────────────────────────── -->
     <div class="toolbar">
@@ -417,6 +482,37 @@
       </div>
     </div>
   </div>
+  </main>
+
+  <section class="editor-seo" aria-labelledby="editor-seo-title">
+    <div class="editor-seo__inner">
+      <div class="editor-seo__content">
+        <p class="editor-seo__eyebrow">Browser CAD workflow</p>
+        <h1 id="editor-seo-title">OpenSCAD editor for AI CAD, SCAD files, and STL-ready 3D printing</h1>
+        <p class="editor-seo__lead">This page is the working editor for scAId. It is built for people who want to write OpenSCAD in the browser, generate geometry from text prompts, iterate on parametric parts quickly, and export clean STL files for slicers and printers.</p>
+        <div class="editor-seo__grid">
+          <article class="editor-seo__card">
+            <h2>Write or generate SCAD</h2>
+            <p>Start from a blank <code>.scad</code> file, a reusable template, or a plain-English prompt that the AI turns into parametric code you can inspect and edit directly.</p>
+          </article>
+          <article class="editor-seo__card">
+            <h2>Preview geometry in real time</h2>
+            <p>Render immediately in the browser, inspect faces and dimensions, and refine boolean operations, clearances, and proportions before you export.</p>
+          </article>
+          <article class="editor-seo__card">
+            <h2>Export SCAD to STL</h2>
+            <p>Download STL or OBJ files for 3D printing workflows and keep the source SCAD for future edits, versioning, and repeatable engineering changes.</p>
+          </article>
+        </div>
+      </div>
+      <aside class="editor-seo__aside">
+        <h2>Useful next steps</h2>
+        <a href="openscad-guide.html">Read the OpenSCAD and SCAD guide</a>
+        <a href="gallery.html">Browse public CAD examples</a>
+        <a href="/">See the main product overview</a>
+      </aside>
+    </div>
+  </section>
 
   <script type="module" src="/js/render.js"></script>
 </body>
