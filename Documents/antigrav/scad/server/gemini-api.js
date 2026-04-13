@@ -2,7 +2,12 @@
    scAId — Gemini 3.1 Pro API Backend
    ═══════════════════════════════════════════════════════ */
 
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
 const MAX_REQUEST_BYTES = 1_000_000;
+const GUEST_RATE_LIMIT_COOKIE = 'scaid_guest_ai_rl';
+const GUEST_RATE_LIMIT_MAX_REQUESTS = 2;
+const GUEST_RATE_LIMIT_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 // ── System Prompt: Generation ────────────────────────
 // This prompt is a precise technical reference card for the
@@ -106,6 +111,190 @@ function readJsonBody(req) {
     });
     req.on('error', reject);
   });
+}
+
+function getSupabaseConfig(env) {
+  const url = env.SUPABASE_URL || env.VITE_SUPABASE_URL || '';
+  const anonKey = env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
+  return { url, anonKey };
+}
+
+function getRateLimitSecret(env) {
+  return env.RATE_LIMIT_SECRET || env.GEMINI_API_KEY || '';
+}
+
+function parseCookieHeader(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+
+  for (const part of cookieHeader.split(';')) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const separatorIndex = trimmed.indexOf('=');
+    if (separatorIndex === -1) continue;
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const value = trimmed.slice(separatorIndex + 1).trim();
+    cookies[key] = value;
+  }
+
+  return cookies;
+}
+
+function isSecureRequest(req) {
+  const forwardedProto = String(req.headers?.['x-forwarded-proto'] || '').toLowerCase();
+  if (forwardedProto.includes('https')) return true;
+  return Boolean(req.socket?.encrypted);
+}
+
+function base64UrlEncode(value) {
+  return Buffer.from(value, 'utf8').toString('base64url');
+}
+
+function base64UrlDecode(value) {
+  return Buffer.from(value, 'base64url').toString('utf8');
+}
+
+function signValue(payload, secret) {
+  return createHmac('sha256', secret).update(payload).digest('base64url');
+}
+
+function constantTimeEqual(a, b) {
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
+
+function encodeGuestRateLimitState(state, secret) {
+  const payload = base64UrlEncode(JSON.stringify(state));
+  const signature = signValue(payload, secret);
+  return `${payload}.${signature}`;
+}
+
+function decodeGuestRateLimitState(rawValue, secret) {
+  if (!rawValue || !secret) return null;
+
+  const separatorIndex = rawValue.lastIndexOf('.');
+  if (separatorIndex === -1) return null;
+
+  const payload = rawValue.slice(0, separatorIndex);
+  const signature = rawValue.slice(separatorIndex + 1);
+  const expectedSignature = signValue(payload, secret);
+  if (!constantTimeEqual(signature, expectedSignature)) return null;
+
+  try {
+    return JSON.parse(base64UrlDecode(payload));
+  } catch {
+    return null;
+  }
+}
+
+function appendSetCookie(res, value) {
+  const existing = res.getHeader('Set-Cookie');
+  if (!existing) {
+    res.setHeader('Set-Cookie', value);
+    return;
+  }
+
+  if (Array.isArray(existing)) {
+    res.setHeader('Set-Cookie', [...existing, value]);
+    return;
+  }
+
+  res.setHeader('Set-Cookie', [existing, value]);
+}
+
+function writeGuestRateLimitCookie(res, req, timestamps, env) {
+  const secret = getRateLimitSecret(env);
+  if (!secret) return;
+
+  const state = {
+    timestamps,
+  };
+  const value = encodeGuestRateLimitState(state, secret);
+  const attributes = [
+    `${GUEST_RATE_LIMIT_COOKIE}=${value}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${Math.ceil(GUEST_RATE_LIMIT_WINDOW_MS / 1000)}`,
+  ];
+
+  if (isSecureRequest(req)) attributes.push('Secure');
+  appendSetCookie(res, attributes.join('; '));
+}
+
+function getGuestRateLimitTimestamps(req, env, now = Date.now()) {
+  const secret = getRateLimitSecret(env);
+  if (!secret) return [];
+
+  const cookies = parseCookieHeader(req.headers?.cookie || '');
+  const state = decodeGuestRateLimitState(cookies[GUEST_RATE_LIMIT_COOKIE], secret);
+  const timestamps = Array.isArray(state?.timestamps) ? state.timestamps : [];
+
+  return timestamps
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0 && now - value < GUEST_RATE_LIMIT_WINDOW_MS)
+    .sort((a, b) => a - b);
+}
+
+function formatRetryDelay(ms) {
+  const totalMinutes = Math.max(1, Math.ceil(ms / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+}
+
+function enforceGuestRateLimit(req, res, env) {
+  const now = Date.now();
+  const recentTimestamps = getGuestRateLimitTimestamps(req, env, now);
+
+  if (recentTimestamps.length >= GUEST_RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfterMs = GUEST_RATE_LIMIT_WINDOW_MS - (now - recentTimestamps[0]);
+    const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+    writeGuestRateLimitCookie(res, req, recentTimestamps, env);
+    res.setHeader('Retry-After', String(retryAfterSeconds));
+    return {
+      allowed: false,
+      retryAfterSeconds,
+      message: `Guest AI access is limited to ${GUEST_RATE_LIMIT_MAX_REQUESTS} requests every 3 hours. Create a free account to keep generating right away, or try again in ${formatRetryDelay(retryAfterMs)}.`,
+    };
+  }
+
+  writeGuestRateLimitCookie(res, req, [...recentTimestamps, now], env);
+  return { allowed: true };
+}
+
+function getBearerToken(req) {
+  const authHeader = String(req.headers?.authorization || '').trim();
+  if (!authHeader.toLowerCase().startsWith('bearer ')) return '';
+  return authHeader.slice(7).trim();
+}
+
+async function getAuthenticatedUser(req, env) {
+  const token = getBearerToken(req);
+  if (!token) return null;
+
+  const { url, anonKey } = getSupabaseConfig(env);
+  if (!url || !anonKey) return null;
+
+  try {
+    const response = await fetch(`${url}/auth/v1/user`, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) return null;
+    const user = await response.json();
+    return user?.id ? user : null;
+  } catch {
+    return null;
+  }
 }
 
 function buildLineStarts(source) {
@@ -483,6 +672,17 @@ export function createGeminiApiMiddleware(env) {
     }
 
     try {
+      const authenticatedUser = await getAuthenticatedUser(req, env);
+      if (!authenticatedUser) {
+        const rateLimit = enforceGuestRateLimit(req, res, env);
+        if (!rateLimit.allowed) {
+          return sendJson(res, 429, {
+            error: rateLimit.message,
+            retryAfterSeconds: rateLimit.retryAfterSeconds,
+          });
+        }
+      }
+
       if (pathname === '/api/chat/generate') {
         await handleGenerate(req, res, env);
       } else {

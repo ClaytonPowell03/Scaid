@@ -162,9 +162,16 @@ function nudgeQuickEditValue(direction) {
 }
 
 async function requestScadFromApi(url, payload) {
+  const session = await getSession();
+  const headers = { 'Content-Type': 'application/json' };
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    headers,
     body: JSON.stringify(payload),
   });
 
