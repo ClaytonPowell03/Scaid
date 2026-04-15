@@ -31,6 +31,19 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    optimizeDeps: {
+      include: [
+        'three',
+        'gsap',
+        '@supabase/supabase-js',
+        'codemirror',
+        '@codemirror/view',
+        '@codemirror/state',
+        '@codemirror/commands',
+        '@codemirror/language',
+        'three-csg-ts',
+      ],
+    },
     server: {
       open: true,
     },

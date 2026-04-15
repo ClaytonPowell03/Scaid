@@ -1,0 +1,11 @@
+# Documentation & misc (not needed for build)
+TODO.md
+.vade-report
+*.sql
+README.md
+
+# Local dev only
+server.js
+build_error.log
+vite-dev.err
+vite-dev.out
