@@ -1,0 +1,45 @@
+The "Pattern Library" section (#library) renders six small, auto-rotating 3D models in a grid. Each tile is a fully live, parametric SCAD compile — not a baked image. Here's the chain end-to-end:
+
+1. The data: src/lib/scad/samples.ts
+A static array SAMPLES holds six entries, each with an id, name, category, blurb, and a source string containing real mini-OpenSCAD code (e.g. the helical lattice uses a for (i = [0:4:360]) loop with rotate + translate + cylinder).
+
+2. The grid: src/components/scad/ModelGallery.tsx
+Maps over SAMPLES and, for each sample, renders a card.
+Inside each card's square thumbnail, it mounts a <SCADViewer source={s.source} autoRotate axes={false} />.
+That means 6 independent Three.js renderers are running at once, each compiling its own SCAD source and orbiting it.
+A grid-dots overlay and dashed border-t give the technical-drawing feel; hover state is just a CSS background swap and the "VIEW →" affordance fading in.
+3. The viewer: src/components/scad/SCADViewer.tsx
+Two useEffects do the work:
+
+Mount effect (runs once):
+
+Builds a THREE.Scene with hemisphere + key/fill/rim lights, a ShadowMaterial ground plane (so models cast soft shadows), and an empty pivot group that will hold the compiled model.
+Sets up a manual orbit controller: pointer drag updates a THREE.Spherical (theta, phi, radius); wheel scales radius. No OrbitControls dependency.
+Starts a requestAnimationFrame loop. Each frame:
+if (autoRotate && !dragging) spherical.theta += 0.0025;
+camera.position = target + sphericalToCartesian(spherical);
+camera.lookAt(target);
+renderer.render(...)
+That tiny += 0.0025 on theta is what produces the slow orbit you see — the camera circles a fixed target, not the mesh spinning.
+Source effect (runs on every source change, debounced 220 ms):
+
+Disposes any existing geometry/materials in pivot.
+Calls compileScad(source) from src/lib/scad/engine.ts.
+Computes the bounding box, centers the model on X/Z, drops it onto Y=0, then sets spherical.radius = size.length() * 1.4 * 0.9 and target.y = size.y/2 so the camera auto-frames whatever just compiled.
+Reports { triangles, ms } back via onStats (used by the HUD in the hero, ignored by the gallery cards).
+4. The compiler: src/lib/scad/engine.ts
+compileScad(source) is a tiny self-contained pipeline:
+
+Tokenize — strip // and /* */ comments, then walk the string producing tokens (num, id, str, punc).
+Parse — recursive-descent parser builds an AST of Stmt (shapes + for loops) and Expr (numbers, vectors [x,y,z], binary math, calls like sin(x)).
+Evaluate / build — buildStmt walks the AST and emits Three.js objects:
+Primitives (cube, sphere, cylinder) → BoxGeometry / SphereGeometry / CylinderGeometry. Note cylinders are rotated 90° on X because OpenSCAD is Z-up while Three is Y-up.
+Transforms (translate, rotate, scale, color) → wrap children in a THREE.Group and apply position / rotation / scale, or clone materials and recolor.
+for loops → iterate start : step : end (capped at 4000 iterations as a safety) and recursively build the body for each value, threading the loop variable through a small env object.
+Booleans (union, difference, intersection) → bake child meshes into Brushes and run them through three-bvh-csg's Evaluator with ADDITION / SUBTRACTION / INTERSECTION. This is what lets the bracket cut bolt holes and the dome carve its hollow interior.
+Returns { group, triangles } where group is the assembled THREE.Group ready to drop into the scene.
+Why it feels alive
+Each card is a real compile, not a sprite — change samples.ts and the gallery updates immediately.
+The orbit is camera-side, so models keep their grounded shadow on the floor instead of tumbling in space.
+Auto-frame after compile means even drastically different model sizes look right in the same square.
+Debouncing (220 ms) + per-card ResizeObserver keep things stable as the layout settles.
