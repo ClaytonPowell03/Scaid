@@ -197,7 +197,7 @@
         <button class="btn-icon" id="btn-shortcuts" title="Keyboard shortcuts (?)">
           <span>⌨</span>
         </button>
-        <button class="btn-icon mobile-code-toggle" id="btn-mobile-code" title="Toggle Code">
+        <button class="btn-icon mobile-code-toggle" id="btn-mobile-code-old" title="Toggle Code" style="display:none;">
           <span>&lt;/&gt;</span>
         </button>
         <div class="toolbar__sep"></div>
@@ -352,6 +352,28 @@
 
   </div>
 
+  <!-- Mobile FAB Toggle -->
+  <button class="mobile-code-toggle-fab" id="btn-mobile-code">
+    <span class="fab-icon">💬</span>
+    <span class="fab-text">Chat / Code</span>
+  </button>
+
+  <!-- Mobile Warning Modal -->
+  <div class="modal-overlay" id="mobile-warning-modal">
+    <div class="modal glass" style="max-width: 400px; text-align: center;">
+      <div class="modal__header">
+        <h3 class="modal__title">📱 Mobile Detected</h3>
+        <button class="modal__close" id="mobile-warning-close">✕</button>
+      </div>
+      <div class="modal__body">
+        <p style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 16px; line-height: 1.5;">
+          We recommend using a computer for the best scAId experience. The editor involves 3D rendering and code editing which is optimized for larger screens.
+        </p>
+        <button class="face-edit-popover__btn face-edit-popover__btn--accent" id="mobile-warning-ok" style="width: 100%;">I Understand</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="render-toast" id="render-toast"></div>
 
@@ -489,35 +511,23 @@
   </div>
   </main>
 
-  <section class="editor-seo" aria-labelledby="editor-seo-title">
-    <div class="editor-seo__inner">
-      <div class="editor-seo__content">
-        <p class="editor-seo__eyebrow">Browser CAD workflow</p>
-        <h1 id="editor-seo-title">OpenSCAD editor for AI CAD, SCAD files, and STL-ready 3D printing</h1>
-        <p class="editor-seo__lead">This page is the working editor for scAId. It is built for people who want to write OpenSCAD in the browser, generate geometry from text prompts, iterate on parametric parts quickly, and export clean STL files for slicers and printers.</p>
-        <div class="editor-seo__grid">
-          <article class="editor-seo__card">
-            <h2>Write or generate SCAD</h2>
-            <p>Start from a blank <code>.scad</code> file, a reusable template, or a plain-English prompt that the AI turns into parametric code you can inspect and edit directly.</p>
-          </article>
-          <article class="editor-seo__card">
-            <h2>Preview geometry in real time</h2>
-            <p>Render immediately in the browser, inspect faces and dimensions, and refine boolean operations, clearances, and proportions before you export.</p>
-          </article>
-          <article class="editor-seo__card">
-            <h2>Export SCAD to STL</h2>
-            <p>Download STL or OBJ files for 3D printing workflows and keep the source SCAD for future edits, versioning, and repeatable engineering changes.</p>
-          </article>
-        </div>
+  <!-- ─── Code Editor Warning Modal ────────────────── -->
+  <div class="modal-overlay" id="code-warning-modal">
+    <div class="modal glass" style="max-width: 400px; text-align: center;">
+      <div class="modal__header">
+        <h3 class="modal__title">⚠️ Warning</h3>
+        <button class="modal__close" id="code-warning-close">✕</button>
       </div>
-      <aside class="editor-seo__aside">
-        <h2>Useful next steps</h2>
-        <a href="openscad-guide.html">Read the OpenSCAD and SCAD guide</a>
-        <a href="gallery.html">Browse public CAD examples</a>
-        <a href="/">See the main product overview</a>
-      </aside>
+      <div class="modal__body">
+        <p style="font-size: 0.9rem; color: var(--text-primary); margin-bottom: 16px; line-height: 1.5;">
+          Our code editor is specifically designed to work well with AI. For fully custom code we recommend using <a href="https://ochafik.com/openscad2/" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">https://ochafik.com/openscad2/</a>
+        </p>
+        <button class="face-edit-popover__btn face-edit-popover__btn--accent" id="code-warning-ok" style="width: 100%;">Understood</button>
+      </div>
     </div>
-  </section>
+  </div>
+
+
 
   <script type="module" src="/js/render.js"></script>
 </body>

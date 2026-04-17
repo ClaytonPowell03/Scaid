@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser CAD Workflow | scAId</title>
+  <meta name="description" content="Learn about the browser-based CAD workflow using scAId's OpenSCAD editor." />
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="stylesheet" href="/css/global.css" />
+  <link rel="stylesheet" href="/css/landing.css" />
+  <link rel="stylesheet" href="/css/render.css" />
+</head>
+<body class="gallery-page">
+  <!-- ─── Navbar ─────────────────────────────────── -->
+  <nav class="navbar" id="navbar" aria-label="Main navigation">
+    <a href="/" class="navbar__logo">
+      <img src="/logo.png" alt="scAId logo" class="navbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
+      scAId
+    </a>
+    <ul class="navbar__links">
+      <li><a href="/">Home</a></li>
+      <li><a href="openscad-guide.html">Guide</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="render.html" class="btn btn-secondary nav-cta">Open Editor</a></li>
+    </ul>
+  </nav>
+
+  <main style="padding-top: 80px; min-height: 80vh;">
+    <section class="editor-seo" aria-labelledby="editor-seo-title">
+      <div class="editor-seo__inner">
+        <div class="editor-seo__content">
+          <p class="editor-seo__eyebrow">Browser CAD workflow</p>
+          <h1 id="editor-seo-title">OpenSCAD editor for AI CAD, SCAD files, and STL-ready 3D printing</h1>
+          <p class="editor-seo__lead">This is the workflow for scAId. It is built for people who want to write OpenSCAD in the browser, generate geometry from text prompts, iterate on parametric parts quickly, and export clean STL files for slicers and printers.</p>
+          <div class="editor-seo__grid">
+            <article class="editor-seo__card">
+              <h2>Write or generate SCAD</h2>
+              <p>Start from a blank <code>.scad</code> file, a reusable template, or a plain-English prompt that the AI turns into parametric code you can inspect and edit directly.</p>
+            </article>
+            <article class="editor-seo__card">
+              <h2>Preview geometry in real time</h2>
+              <p>Render immediately in the browser, inspect faces and dimensions, and refine boolean operations, clearances, and proportions before you export.</p>
+            </article>
+            <article class="editor-seo__card">
+              <h2>Export SCAD to STL</h2>
+              <p>Download STL or OBJ files for 3D printing workflows and keep the source SCAD for future edits, versioning, and repeatable engineering changes.</p>
+            </article>
+          </div>
+        </div>
+        <aside class="editor-seo__aside">
+          <h2>Useful next steps</h2>
+          <a href="openscad-guide.html">Read the OpenSCAD and SCAD guide</a>
+          <a href="gallery.html">Browse public CAD examples</a>
+          <a href="render.html">Open the Editor</a>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <a href="/" class="navbar__logo" style="font-size:1rem;" aria-label="scAId home">
+          <img src="/logo.png" alt="scAId logo" class="navbar__logo-icon" style="width:24px; height:24px; object-fit:contain;" />
+          scAId
+        </a>
+        <p class="footer__about">Community OpenSCAD examples, AI CAD concepts, and 3D-printing project inspiration from the scAId ecosystem.</p>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Explore</h4>
+        <a href="/">Home</a>
+        <a href="openscad-guide.html">OpenSCAD Guide</a>
+        <a href="render.html">Open Editor</a>
+      </div>
+      <div class="footer__col">
+        <h4 class="footer__col-title">Topics</h4>
+        <a href="workflow.html">Browser CAD Workflow</a>
+        <a href="openscad-guide.html#scad-file">What is a SCAD file?</a>
+        <a href="openscad-guide.html#stl-workflow">SCAD to STL workflow</a>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span class="footer__copy">© 2026 scAId — Community CAD gallery</span>
+    </div>
+  </footer>
+</body>
+</html>

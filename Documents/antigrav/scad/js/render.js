@@ -830,11 +830,23 @@ function initTabs() {
     if (activeTabId === 'tab-console') {
       updateConsoleUI();
     }
+
+    if (activeTabId === 'tab-code') {
+      if (!localStorage.getItem('scaid_code_warning_seen')) {
+        localStorage.setItem('scaid_code_warning_seen', 'true');
+        openModal('code-warning-modal');
+      }
+    }
   }
 
   if (tabChat) tabChat.addEventListener('click', () => switchTab('tab-chat'));
   if (tabCode) tabCode.addEventListener('click', () => switchTab('tab-code'));
   if (tabConsole) tabConsole.addEventListener('click', () => switchTab('tab-console'));
+
+  const warningClose = document.getElementById('code-warning-close');
+  const warningOk = document.getElementById('code-warning-ok');
+  if (warningClose) warningClose.addEventListener('click', () => closeModal('code-warning-modal'));
+  if (warningOk) warningOk.addEventListener('click', () => closeModal('code-warning-modal'));
 }
 
 function initAIChat() {
@@ -1714,3 +1726,33 @@ function initGalleryPublish() {
     }
   });
 }
+
+// -- Mobile Warning Check ----------------------------
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.innerWidth <= 768) {
+    const warned = localStorage.getItem('scaid_mobile_warning_seen');
+    if (!warned) {
+      localStorage.setItem('scaid_mobile_warning_seen', 'true');
+      const mobileModal = document.getElementById('mobile-warning-modal');
+      if (mobileModal) {
+        mobileModal.classList.add('visible');
+      }
+    }
+  }
+
+  const mobileCloseBtn = document.getElementById('mobile-warning-close');
+  const mobileOkBtn = document.getElementById('mobile-warning-ok');
+  
+  if (mobileCloseBtn) {
+    mobileCloseBtn.addEventListener('click', () => {
+        const m = document.getElementById('mobile-warning-modal');
+        if (m) m.classList.remove('visible');
+    });
+  }
+  if (mobileOkBtn) {
+    mobileOkBtn.addEventListener('click', () => {
+        const m = document.getElementById('mobile-warning-modal');
+        if (m) m.classList.remove('visible');
+    });
+  }
+});
