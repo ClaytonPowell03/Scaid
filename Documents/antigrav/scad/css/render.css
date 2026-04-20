@@ -38,16 +38,12 @@
 }
 
 .loading-screen__icon {
-  width: 48px;
-  height: 48px;
-  background: var(--grad-primary);
-  border-radius: 14px;
+  width: auto;
+  height: 160px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  color: #0a0a0f;
-  font-weight: 900;
+  object-fit: contain;
   animation: loadingPulse 1.5s ease-in-out infinite;
 }
 
@@ -130,16 +126,12 @@
 .toolbar__logo:hover { opacity: 0.8; }
 
 .toolbar__logo-icon {
-  width: 28px;
-  height: 28px;
-  background: var(--grad-primary);
-  border-radius: 7px;
+  width: auto;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  color: #0a0a0f;
-  font-weight: 900;
+  object-fit: contain;
 }
 
 .toolbar__sep {

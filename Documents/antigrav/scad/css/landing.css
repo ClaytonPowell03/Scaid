@@ -17,9 +17,9 @@
   font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; letter-spacing: -0.02em;
 }
 .loading-screen__icon {
-  width: 36px; height: 36px; background: var(--grad-primary); border-radius: 9px;
+  width: auto; height: 160px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; color: #09090b; font-weight: 900;
+  object-fit: contain;
 }
 .loading-screen__bar { width: 180px; height: 2px; background: #1a1a1f; border-radius: 2px; overflow: hidden; }
 .loading-screen__bar-fill { height: 100%; width: 0; background: #dedee3; border-radius: 2px; animation: loadBar 1.5s ease-in-out forwards; }
@@ -36,7 +36,7 @@
 /* ── Navbar ───────────────────────────────────────── */
 .navbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  padding: 0 48px; height: 60px;
+  padding: 5px 48px; height: auto; min-height: 80px;
   display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid transparent;
   transition: all 0.3s ease;
@@ -50,9 +50,9 @@
   font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; letter-spacing: -0.02em;
 }
 .navbar__logo-icon {
-  width: 28px; height: 28px; background: var(--grad-primary); border-radius: 7px;
+  width: auto; height: 100px; max-width: 300px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.75rem; color: #09090b; font-weight: 900;
+  object-fit: contain;
 }
 .navbar__links { display: flex; align-items: center; gap: 28px; list-style: none; }
 .navbar__links a {
