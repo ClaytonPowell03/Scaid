@@ -4,6 +4,7 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { getPostHogClient } from './posthog.js';
+import { GoogleGenAI } from '@google/genai';
 
 const MAX_REQUEST_BYTES = 1_000_000;
 const GUEST_RATE_LIMIT_COOKIE = 'scaid_guest_ai_rl';
@@ -135,7 +136,7 @@ function getSupabaseConfig(env) {
 }
 
 function getRateLimitSecret(env) {
-  return env.RATE_LIMIT_SECRET || env.GEMINI_API_KEY || '';
+  return env.RATE_LIMIT_SECRET || env.GOOGLE_API_KEY || '';
 }
 
 function parseCookieHeader(cookieHeader) {
@@ -358,6 +359,7 @@ function buildSelectionSummary(selection, currentCode) {
 
 // ── Response extraction ──────────────────────────────
 function extractTextFromGemini(responseJson) {
+  if (responseJson?.text) return responseJson.text;
   const candidate = responseJson?.candidates?.[0];
   if (!candidate?.content?.parts) return '';
   return candidate.content.parts
@@ -571,39 +573,31 @@ async function generateCompleteScad({
 
 // ── Gemini API call ──────────────────────────────────
 async function callGemini({ apiKey, model, system, userPrompt, maxOutputTokens = 16384 }) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  const body = {
-    systemInstruction: { parts: [{ text: system }] },
-    contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens,
-      thinkingConfig: {
-        thinkingLevel: 'HIGH',
-      },
-    },
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+  const ai = new GoogleGenAI({
+    vertexai: true,
+    apiKey: apiKey,
   });
 
-  const rawText = await response.text();
-  let payload = null;
-  try { payload = rawText ? JSON.parse(rawText) : {}; }
-  catch { payload = null; }
-
-  if (!response.ok) {
-    const msg = payload?.error?.message || rawText || `Gemini request failed (${response.status}).`;
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: userPrompt,
+      config: {
+        systemInstruction: system,
+        temperature: 0.3,
+        maxOutputTokens,
+        thinkingConfig: {
+          thinkingLevel: 'HIGH',
+        },
+      },
+    });
+    return response;
+  } catch (error) {
+    const msg = error?.message || `Gemini request failed.`;
     const err = new Error(msg);
-    err.statusCode = response.status;
+    err.statusCode = error?.status || 500;
     throw err;
   }
-
-  return payload;
 }
 
 // ── Route: /api/chat/generate ────────────────────────
@@ -618,9 +612,9 @@ async function handleGenerate(req, res, env) {
     ? `The user already has this code:\n\`\`\`\n${currentCode}\n\`\`\`\n\nUser request: ${prompt}`
     : `Generate OpenSCAD code from scratch.\n\nUser request: ${prompt}`;
 
-  const model = env.GEMINI_MODEL || 'gemini-3.1-pro';
+  const model = env.GOOGLE_MODEL || 'gemini-3.1-pro';
   const result = await generateCompleteScad({
-    apiKey: env.GEMINI_API_KEY,
+    apiKey: env.GOOGLE_API_KEY,
     model,
     maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_GENERATE,
@@ -653,9 +647,9 @@ async function handleFaceEdit(req, res, env) {
     `Current code:\n\`\`\`\n${currentCode}\n\`\`\``,
   ].join('\n');
 
-  const model = env.GEMINI_MODEL || 'gemini-3.1-pro';
+  const model = env.GOOGLE_MODEL || 'gemini-3.1-pro';
   const result = await generateCompleteScad({
-    apiKey: env.GEMINI_API_KEY,
+    apiKey: env.GOOGLE_API_KEY,
     model,
     maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_FACE_EDIT,
@@ -679,8 +673,8 @@ export function createGeminiApiMiddleware(env) {
     if (pathname !== '/api/chat/generate' && pathname !== '/api/chat/face-edit') {
       return next();
     }
-    if (!env.GEMINI_API_KEY) {
-      return sendJson(res, 500, { error: 'Missing GEMINI_API_KEY on server.' });
+    if (!env.GOOGLE_API_KEY) {
+      return sendJson(res, 500, { error: 'Missing GOOGLE_API_KEY on server.' });
     }
     if (method !== 'POST') {
       return sendJson(res, 405, { error: 'Method not allowed. Use POST.' });
