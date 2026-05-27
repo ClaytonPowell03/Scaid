@@ -1334,6 +1334,16 @@ function initAIChat() {
     chatInput.style.height = 'auto';
 
     const chatHistory = document.getElementById('chat-history');
+    
+    const editorAiToast = document.getElementById('editor-ai-toast');
+    if (editorAiToast) {
+      editorAiToast.style.opacity = '1';
+      editorAiToast.style.transform = 'translateX(-50%) translateY(0)';
+      setTimeout(() => {
+        editorAiToast.style.opacity = '0';
+        editorAiToast.style.transform = 'translateX(-50%) translateY(20px)';
+      }, 6000);
+    }
 
     if (chatHistory) {
       const userBubble = document.createElement('div');

@@ -618,7 +618,7 @@ async function handleGenerate(req, res, env) {
     ? `The user already has this code:\n\`\`\`\n${currentCode}\n\`\`\`\n\nUser request: ${prompt}`
     : `Generate OpenSCAD code from scratch.\n\nUser request: ${prompt}`;
 
-  const model = env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
+  const model = env.GEMINI_MODEL || 'gemini-3.1-pro';
   const result = await generateCompleteScad({
     apiKey: env.GEMINI_API_KEY,
     model,
@@ -653,7 +653,7 @@ async function handleFaceEdit(req, res, env) {
     `Current code:\n\`\`\`\n${currentCode}\n\`\`\``,
   ].join('\n');
 
-  const model = env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
+  const model = env.GEMINI_MODEL || 'gemini-3.1-pro';
   const result = await generateCompleteScad({
     apiKey: env.GEMINI_API_KEY,
     model,
