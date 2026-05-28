@@ -1,11 +1,11 @@
 import { defineConfig, loadEnv } from 'vite';
 import { resolve } from 'path';
-import { createGeminiApiMiddleware } from './server/gemini-api.js';
+import { createApiMiddleware } from './server/gemini-api.js';
 
-function geminiApiPlugin(env) {
-  const middleware = createGeminiApiMiddleware(env);
+function scaidApiPlugin(env) {
+  const middleware = createApiMiddleware(env);
   return {
-    name: 'scad-gemini-api',
+    name: 'scad-api',
     configureServer(server) {
       server.middlewares.use(middleware);
     },
@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
   const env = { ...process.env, ...loaded };
 
   return {
-    plugins: [geminiApiPlugin(env)],
+    plugins: [scaidApiPlugin(env)],
     build: {
       rollupOptions: {
         input: {

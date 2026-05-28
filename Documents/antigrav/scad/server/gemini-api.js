@@ -1,15 +1,22 @@
 /* ═══════════════════════════════════════════════════════
-   scAId — Gemini 3.1 Pro API Backend
+   scAId — API Backend (OpenRouter + Anthropic Pro)
    ═══════════════════════════════════════════════════════ */
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { getPostHogClient } from './posthog.js';
-import { GoogleGenAI } from '@google/genai';
 
 const MAX_REQUEST_BYTES = 1_000_000;
 const GUEST_RATE_LIMIT_COOKIE = 'scaid_guest_ai_rl';
 const GUEST_RATE_LIMIT_MAX_REQUESTS = 2;
 const GUEST_RATE_LIMIT_WINDOW_MS = 3 * 60 * 60 * 1000;
+
+// ── Provider constants ───────────────────────────────
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_MODEL = 'moonshotai/kimi-k2.6';
+
+const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_MODEL = 'claude-opus-4-7-20250515';
+const ANTHROPIC_API_VERSION = '2023-06-01';
 
 // ── System Prompt: Generation ────────────────────────
 // This prompt is a precise technical reference card for the
@@ -136,7 +143,7 @@ function getSupabaseConfig(env) {
 }
 
 function getRateLimitSecret(env) {
-  return env.RATE_LIMIT_SECRET || env.GOOGLE_API_KEY || '';
+  return env.RATE_LIMIT_SECRET || env.OPENROUTER_API_KEY || '';
 }
 
 function parseCookieHeader(cookieHeader) {
@@ -313,6 +320,15 @@ async function getAuthenticatedUser(req, env) {
   }
 }
 
+function isProUser(user) {
+  if (!user) return false;
+  // Check user_metadata (set by Stripe webhook)
+  if (user.user_metadata?.is_pro === true) return true;
+  // Fallback: check app_metadata
+  if (user.app_metadata?.subscription_tier === 'pro') return true;
+  return false;
+}
+
 function buildLineStarts(source) {
   const starts = [0];
   for (let i = 0; i < source.length; i++) {
@@ -358,15 +374,30 @@ function buildSelectionSummary(selection, currentCode) {
 }
 
 // ── Response extraction ──────────────────────────────
-function extractTextFromGemini(responseJson) {
-  if (responseJson?.text) return responseJson.text;
-  const candidate = responseJson?.candidates?.[0];
-  if (!candidate?.content?.parts) return '';
-  return candidate.content.parts
-    .filter(p => typeof p.text === 'string')
-    .map(p => p.text)
+
+// Extract text from OpenRouter (OpenAI-compatible) response
+function extractTextFromOpenRouter(responseJson) {
+  const choice = responseJson?.choices?.[0];
+  if (!choice) return '';
+  // The content is in message.content
+  return (choice.message?.content || '').trim();
+}
+
+// Extract text from Anthropic response
+function extractTextFromAnthropic(responseJson) {
+  const contentBlocks = responseJson?.content;
+  if (!Array.isArray(contentBlocks)) return '';
+  // Filter for text blocks (skip thinking blocks)
+  return contentBlocks
+    .filter(block => block.type === 'text')
+    .map(block => block.text || '')
     .join('\n')
     .trim();
+}
+
+function extractText(responseJson, provider) {
+  if (provider === 'anthropic') return extractTextFromAnthropic(responseJson);
+  return extractTextFromOpenRouter(responseJson);
 }
 
 function extractScad(text) {
@@ -380,8 +411,12 @@ function extractScad(text) {
   return normalized.trim();
 }
 
-function getGeminiFinishReason(responseJson) {
-  return String(responseJson?.candidates?.[0]?.finishReason || '').trim().toUpperCase();
+function getFinishReason(responseJson, provider) {
+  if (provider === 'anthropic') {
+    return String(responseJson?.stop_reason || '').trim().toUpperCase();
+  }
+  // OpenRouter / OpenAI format
+  return String(responseJson?.choices?.[0]?.finish_reason || '').trim().toUpperCase();
 }
 
 function analyzeScadCompleteness(source) {
@@ -515,6 +550,7 @@ function buildContinuationPrompt(originalPrompt, partialCode, completion) {
 }
 
 async function generateCompleteScad({
+  provider,
   apiKey,
   model,
   system,
@@ -522,7 +558,9 @@ async function generateCompleteScad({
   maxOutputTokens,
   maxContinuations = 3,
 }) {
-  let response = await callGemini({
+  const callFn = provider === 'anthropic' ? callAnthropic : callOpenRouter;
+
+  let response = await callFn({
     apiKey,
     model,
     system,
@@ -530,14 +568,14 @@ async function generateCompleteScad({
     maxOutputTokens,
   });
 
-  let scadCode = extractScad(extractTextFromGemini(response));
-  let finishReason = getGeminiFinishReason(response);
+  let scadCode = extractScad(extractText(response, provider));
+  let finishReason = getFinishReason(response, provider);
   let continuationCount = 0;
 
   while (shouldContinueScad(scadCode, finishReason) && continuationCount < maxContinuations) {
     const completion = analyzeScadCompleteness(scadCode);
     const continuationPrompt = buildContinuationPrompt(userPrompt, scadCode, completion);
-    const nextResponse = await callGemini({
+    const nextResponse = await callFn({
       apiKey,
       model,
       system,
@@ -545,14 +583,14 @@ async function generateCompleteScad({
       maxOutputTokens,
     });
 
-    const nextChunk = extractScad(extractTextFromGemini(nextResponse));
+    const nextChunk = extractScad(extractText(nextResponse, provider));
     if (!nextChunk) break;
 
     const merged = mergeScadContinuation(scadCode, nextChunk);
     if (merged === scadCode) break;
 
     scadCode = merged;
-    finishReason = getGeminiFinishReason(nextResponse);
+    finishReason = getFinishReason(nextResponse, provider);
     continuationCount += 1;
   }
 
@@ -571,37 +609,112 @@ async function generateCompleteScad({
   };
 }
 
-// ── Gemini API call ──────────────────────────────────
-async function callGemini({ apiKey, model, system, userPrompt, maxOutputTokens = 16384 }) {
-  const ai = new GoogleGenAI({
-    vertexai: true,
-    apiKey: apiKey,
-  });
+// ── OpenRouter API call ──────────────────────────────
+async function callOpenRouter({ apiKey, model, system, userPrompt, maxOutputTokens = 16384 }) {
+  const messages = [];
+
+  if (system) {
+    messages.push({ role: 'system', content: system });
+  }
+  messages.push({ role: 'user', content: userPrompt });
+
+  const body = {
+    model: model,
+    messages,
+    max_tokens: maxOutputTokens,
+    temperature: 0.3,
+    // Enable reasoning for kimi-k2.6
+    provider: {
+      require_parameters: true,
+    },
+    reasoning: {
+      effort: 'high',
+    },
+  };
 
   try {
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: userPrompt,
-      config: {
-        systemInstruction: system,
-        temperature: 0.3,
-        maxOutputTokens,
-        thinkingConfig: {
-          thinkingLevel: 'HIGH',
-        },
+    const response = await fetch(OPENROUTER_BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://scaid.tech',
+        'X-Title': 'scAId',
       },
+      body: JSON.stringify(body),
     });
-    return response;
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const msg = errorData?.error?.message || `OpenRouter request failed (${response.status})`;
+      const err = new Error(msg);
+      err.statusCode = response.status;
+      throw err;
+    }
+
+    return await response.json();
   } catch (error) {
-    const msg = error?.message || `Gemini request failed.`;
+    if (error.statusCode) throw error;
+    const msg = error?.message || 'OpenRouter request failed.';
     const err = new Error(msg);
-    err.statusCode = error?.status || 500;
+    err.statusCode = 500;
+    throw err;
+  }
+}
+
+// ── Anthropic API call ───────────────────────────────
+async function callAnthropic({ apiKey, model, system, userPrompt, maxOutputTokens = 16384 }) {
+  const messages = [
+    { role: 'user', content: userPrompt },
+  ];
+
+  // Anthropic uses extended thinking for Opus 4.7
+  // budget_tokens controls how much the model can think
+  const thinkingBudget = Math.min(maxOutputTokens * 2, 32768);
+
+  const body = {
+    model: model,
+    max_tokens: maxOutputTokens + thinkingBudget,
+    messages,
+    system: system || undefined,
+    temperature: 1, // Required to be 1 when thinking is enabled
+    thinking: {
+      type: 'enabled',
+      budget_tokens: thinkingBudget,
+    },
+  };
+
+  try {
+    const response = await fetch(ANTHROPIC_BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': ANTHROPIC_API_VERSION,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const msg = errorData?.error?.message || `Anthropic request failed (${response.status})`;
+      const err = new Error(msg);
+      err.statusCode = response.status;
+      throw err;
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.statusCode) throw error;
+    const msg = error?.message || 'Anthropic request failed.';
+    const err = new Error(msg);
+    err.statusCode = 500;
     throw err;
   }
 }
 
 // ── Route: /api/chat/generate ────────────────────────
-async function handleGenerate(req, res, env) {
+async function handleGenerate(req, res, env, authenticatedUser) {
   const body = await readJsonBody(req);
   const prompt = (body?.prompt || '').trim();
   const currentCode = typeof body?.currentCode === 'string' ? body.currentCode : '';
@@ -612,25 +725,35 @@ async function handleGenerate(req, res, env) {
     ? `The user already has this code:\n\`\`\`\n${currentCode}\n\`\`\`\n\nUser request: ${prompt}`
     : `Generate OpenSCAD code from scratch.\n\nUser request: ${prompt}`;
 
-  const model = env.GOOGLE_MODEL || 'gemini-3.1-pro';
+  const pro = isProUser(authenticatedUser);
+  const provider = pro ? 'anthropic' : 'openrouter';
+  const apiKey = pro ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
+  const model = pro ? ANTHROPIC_MODEL : OPENROUTER_MODEL;
+
+  if (!apiKey) {
+    return sendJson(res, 500, { error: 'AI service is not configured.' });
+  }
+
   const result = await generateCompleteScad({
-    apiKey: env.GOOGLE_API_KEY,
+    provider,
+    apiKey,
     model,
     maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_GENERATE,
     userPrompt,
   });
 
+  // Never expose the model name — use generic labels
   sendJson(res, 200, {
     scadCode: result.scadCode,
-    model,
+    model: pro ? 'AI Pro' : 'AI',
     finishReason: result.finishReason,
     continuationCount: result.continuationCount,
   });
 }
 
 // ── Route: /api/chat/face-edit ───────────────────────
-async function handleFaceEdit(req, res, env) {
+async function handleFaceEdit(req, res, env, authenticatedUser) {
   const body = await readJsonBody(req);
   const prompt = (body?.prompt || '').trim();
   const currentCode = typeof body?.currentCode === 'string' ? body.currentCode : '';
@@ -647,25 +770,35 @@ async function handleFaceEdit(req, res, env) {
     `Current code:\n\`\`\`\n${currentCode}\n\`\`\``,
   ].join('\n');
 
-  const model = env.GOOGLE_MODEL || 'gemini-3.1-pro';
+  const pro = isProUser(authenticatedUser);
+  const provider = pro ? 'anthropic' : 'openrouter';
+  const apiKey = pro ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
+  const model = pro ? ANTHROPIC_MODEL : OPENROUTER_MODEL;
+
+  if (!apiKey) {
+    return sendJson(res, 500, { error: 'AI service is not configured.' });
+  }
+
   const result = await generateCompleteScad({
-    apiKey: env.GOOGLE_API_KEY,
+    provider,
+    apiKey,
     model,
     maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_FACE_EDIT,
     userPrompt,
   });
 
+  // Never expose the model name — use generic labels
   sendJson(res, 200, {
     scadCode: result.scadCode,
-    model,
+    model: pro ? 'AI Pro' : 'AI',
     finishReason: result.finishReason,
     continuationCount: result.continuationCount,
   });
 }
 
 // ── Middleware export ────────────────────────────────
-export function createGeminiApiMiddleware(env) {
+export function createApiMiddleware(env) {
   return async (req, res, next) => {
     const method = req.method || 'GET';
     const pathname = (req.url || '').split('?')[0];
@@ -673,8 +806,8 @@ export function createGeminiApiMiddleware(env) {
     if (pathname !== '/api/chat/generate' && pathname !== '/api/chat/face-edit') {
       return next();
     }
-    if (!env.GOOGLE_API_KEY) {
-      return sendJson(res, 500, { error: 'Missing GOOGLE_API_KEY on server.' });
+    if (!env.OPENROUTER_API_KEY) {
+      return sendJson(res, 500, { error: 'AI service is not configured on the server.' });
     }
     if (method !== 'POST') {
       return sendJson(res, 405, { error: 'Method not allowed. Use POST.' });
@@ -708,9 +841,9 @@ export function createGeminiApiMiddleware(env) {
 
       try {
         if (pathname === '/api/chat/generate') {
-          await handleGenerate(req, res, env);
+          await handleGenerate(req, res, env, authenticatedUser);
         } else {
-          await handleFaceEdit(req, res, env);
+          await handleFaceEdit(req, res, env, authenticatedUser);
         }
         posthog?.capture({
           distinctId,
@@ -718,6 +851,7 @@ export function createGeminiApiMiddleware(env) {
           properties: {
             outcome: 'success',
             is_authenticated: Boolean(authenticatedUser),
+            is_pro: isProUser(authenticatedUser),
             duration_ms: Date.now() - startTime,
           },
         });
@@ -728,6 +862,7 @@ export function createGeminiApiMiddleware(env) {
           properties: {
             outcome: 'error',
             is_authenticated: Boolean(authenticatedUser),
+            is_pro: isProUser(authenticatedUser),
             duration_ms: Date.now() - startTime,
             error_message: err?.message,
             status_code: err?.statusCode || 500,

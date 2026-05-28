@@ -1,8 +1,8 @@
-import { createGeminiApiMiddleware } from '../server/gemini-api.js';
+import { createApiMiddleware } from '../server/gemini-api.js';
 
 export default async function handler(req, res) {
   // Pass the serverless Vercel environment to the middleware
-  const middleware = createGeminiApiMiddleware(process.env);
+  const middleware = createApiMiddleware(process.env);
   
   // Call the middleware with Vercel's Edge/Serverless request API. 
   // It handles its own responses or passes execution to next() 

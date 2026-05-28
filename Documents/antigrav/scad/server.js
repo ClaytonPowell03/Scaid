@@ -2,7 +2,7 @@ import express from 'express';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { createGeminiApiMiddleware } from './server/gemini-api.js';
+import { createApiMiddleware } from './server/gemini-api.js';
 import { shutdownPostHog } from './server/posthog.js';
 
 // Load local .env into process.env if present
@@ -13,7 +13,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Mount the custom api middleware
-const apiMiddleware = createGeminiApiMiddleware(process.env);
+const apiMiddleware = createApiMiddleware(process.env);
 app.use(apiMiddleware); // Mount at root so req.url retains full path
 
 // Serve the production build artifacts

@@ -1373,8 +1373,8 @@ function initAIChat() {
         prompt,
         currentCode: getEditorContent(),
       });
-      applyGeneratedCode(result.scadCode, result.model || 'AI');
-      addToHistory(prompt, result.model || 'AI', result.scadCode);
+      applyGeneratedCode(result.scadCode, 'AI');
+      addToHistory(prompt, 'AI', result.scadCode);
       updateAIStatus('Generated with AI.');
       
       const loadingBubble = document.getElementById('chat-loading-bubble');
@@ -1426,8 +1426,8 @@ function initAIChat() {
         selection: selectedFaceContext,
         currentCode: getEditorContent(),
       });
-      applyGeneratedCode(result.scadCode, result.model || 'AI');
-      addToHistory(prompt, result.model || 'AI', result.scadCode);
+      applyGeneratedCode(result.scadCode, 'AI');
+      addToHistory(prompt, 'AI', result.scadCode);
       updateAIStatus('Face edit applied with AI.');
       hideFaceEditPopover();
       if (scene3d) scene3d.clearFaceSelection();
