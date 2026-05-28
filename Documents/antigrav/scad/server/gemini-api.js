@@ -628,7 +628,7 @@ async function callOpenRouter({ apiKey, model, system, userPrompt, maxOutputToke
       require_parameters: true,
     },
     reasoning: {
-      effort: 'high',
+      effort: 'low',
     },
   };
 
