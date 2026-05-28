@@ -12,7 +12,7 @@ const GUEST_RATE_LIMIT_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 // ── Provider constants ───────────────────────────────
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODEL = 'moonshotai/kimi-k2.6';
+const OPENROUTER_MODEL = 'xiaomi/mimo-v2.5-pro';
 
 const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_MODEL = 'claude-opus-4-7-20250515';
@@ -628,7 +628,7 @@ async function callOpenRouter({ apiKey, model, system, userPrompt, maxOutputToke
       require_parameters: true,
     },
     reasoning: {
-      effort: 'low',
+      effort: 'medium',
     },
   };
 
