@@ -64,6 +64,25 @@ let suppressToastNotifications = false;
 let suppressConsoleMessages = false;
 const GALLERY_HANDOFF_PREFIX = 'scaid_gallery_open:';
 
+const VIEW_PRESETS = {
+  front: { buttonId: 'view-front', label: 'Front' },
+  top: { buttonId: 'view-top', label: 'Top' },
+  right: { buttonId: 'view-right', label: 'Right' },
+  iso: { buttonId: 'view-iso', label: 'Isometric' },
+};
+
+function setViewportView(view) {
+  if (!scene3d || !VIEW_PRESETS[view]) return;
+  scene3d.setView(view);
+
+  Object.entries(VIEW_PRESETS).forEach(([key, preset]) => {
+    document.getElementById(preset.buttonId)?.classList.toggle('active', key === view);
+  });
+
+  const viewName = document.getElementById('viewport-view-name');
+  if (viewName) viewName.textContent = VIEW_PRESETS[view].label;
+}
+
 // ── Console System ──────────────────────────────────
 const consoleLogs = [];
 function consoleLog(msg, level = 'info') {
@@ -388,6 +407,7 @@ function initScene() {
 
 // ── Render Model ────────────────────────────────────
 function updateAnimationUI(source = getEditorContent()) {
+  const panel = document.getElementById('animation-panel');
   const playBtn = document.getElementById('btn-animation-play');
   const resetBtn = document.getElementById('btn-animation-reset');
   const meta = document.getElementById('animation-meta');
@@ -400,6 +420,8 @@ function updateAnimationUI(source = getEditorContent()) {
   animationState.hasAnimationVariable = supportsAnimation;
   animationState.fps = normalizeAnimationFps(animationState.fps);
   animationState.steps = steps;
+
+  if (panel) panel.classList.toggle('is-inactive', !supportsAnimation);
 
   if (!supportsAnimation && animationState.playing) {
     cancelAnimationFrame(animationState.rafId);
@@ -1642,13 +1664,12 @@ function initToolbar() {
   });
 
   // Reset camera
-  document.getElementById('btn-reset-camera').addEventListener('click', () => scene3d.resetCamera());
+  document.getElementById('btn-reset-camera').addEventListener('click', () => setViewportView('iso'));
 
   // View presets
-  document.getElementById('view-front').addEventListener('click', () => scene3d.setView('front'));
-  document.getElementById('view-top').addEventListener('click', () => scene3d.setView('top'));
-  document.getElementById('view-right').addEventListener('click', () => scene3d.setView('right'));
-  document.getElementById('view-iso').addEventListener('click', () => scene3d.setView('iso'));
+  Object.entries(VIEW_PRESETS).forEach(([view, preset]) => {
+    document.getElementById(preset.buttonId).addEventListener('click', () => setViewportView(view));
+  });
 
   // Mobile Code Toggle
   const btnMobileCode = document.getElementById('btn-mobile-code');
@@ -1721,10 +1742,10 @@ function initShortcuts() {
     }
 
     // Single-key viewport shortcuts
-    if (e.key === 'f' || e.key === 'F') { scene3d.setView('front'); return; }
-    if (e.key === 't') { scene3d.setView('top'); return; }
-    if (e.key === 'r') { scene3d.setView('right'); return; }
-    if (e.key === 'i') { scene3d.setView('iso'); return; }
+    if (e.key === 'f' || e.key === 'F') { setViewportView('front'); return; }
+    if (e.key === 't') { setViewportView('top'); return; }
+    if (e.key === 'r') { setViewportView('right'); return; }
+    if (e.key === 'i') { setViewportView('iso'); return; }
     if (e.key === 'w') {
       const isWire = scene3d.toggleWireframe();
       document.getElementById('btn-wireframe').classList.toggle('active', isWire);

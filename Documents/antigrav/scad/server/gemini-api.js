@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   scAId — API Backend (OpenRouter + Anthropic Pro)
+   scAId — API Backend (OpenRouter)
    ═══════════════════════════════════════════════════════ */
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
@@ -12,11 +12,8 @@ const GUEST_RATE_LIMIT_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 // ── Provider constants ───────────────────────────────
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_MODEL = 'xiaomi/mimo-v2.5-pro';
-
-const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_MODEL = 'claude-opus-4-7-20250515';
-const ANTHROPIC_API_VERSION = '2023-06-01';
+const OPENROUTER_MODEL = 'openai/gpt-5.6-sol';
+const OPENROUTER_REASONING_EFFORT = 'medium';
 
 // ── System Prompt: Generation ────────────────────────
 // This prompt is a precise technical reference card for the
@@ -91,7 +88,7 @@ The renderer will CRASH on any of the following — never emit them:
 4. Parametrize key dimensions at the top with named variables.
 5. Use $fn = 40 on every cylinder and sphere.
 6. For difference(), oversize cutouts by 0.1 and offset by −0.05 to prevent z‑fighting.
-7. Use color() liberally. Favor our modern theme colors: pink/rose ("#d25a8a", "#f19ba9") and purple/plum ("#b466b0", "#291a36", "#2d1b3d"). Use hex strings like color("#d25a8a").
+7. Use color() intentionally to separate functional parts. Keep primary mechanical bodies neutral ("#c7cbc7", "#68716f", "#29302f") and reserve warm coral ("#ff8a64") or steel blue ("#7693a0") for important moving or interactive parts. Avoid rainbow palettes and excessive accent colors.
 8. If animation is requested, keep moving values in named variables near the top and derive them from $t.
 `.trim();
 
@@ -375,29 +372,11 @@ function buildSelectionSummary(selection, currentCode) {
 
 // ── Response extraction ──────────────────────────────
 
-// Extract text from OpenRouter (OpenAI-compatible) response
-function extractTextFromOpenRouter(responseJson) {
+// Extract text from the OpenRouter OpenAI-compatible response.
+function extractText(responseJson) {
   const choice = responseJson?.choices?.[0];
   if (!choice) return '';
-  // The content is in message.content
   return (choice.message?.content || '').trim();
-}
-
-// Extract text from Anthropic response
-function extractTextFromAnthropic(responseJson) {
-  const contentBlocks = responseJson?.content;
-  if (!Array.isArray(contentBlocks)) return '';
-  // Filter for text blocks (skip thinking blocks)
-  return contentBlocks
-    .filter(block => block.type === 'text')
-    .map(block => block.text || '')
-    .join('\n')
-    .trim();
-}
-
-function extractText(responseJson, provider) {
-  if (provider === 'anthropic') return extractTextFromAnthropic(responseJson);
-  return extractTextFromOpenRouter(responseJson);
 }
 
 function extractScad(text) {
@@ -411,11 +390,7 @@ function extractScad(text) {
   return normalized.trim();
 }
 
-function getFinishReason(responseJson, provider) {
-  if (provider === 'anthropic') {
-    return String(responseJson?.stop_reason || '').trim().toUpperCase();
-  }
-  // OpenRouter / OpenAI format
+function getFinishReason(responseJson) {
   return String(responseJson?.choices?.[0]?.finish_reason || '').trim().toUpperCase();
 }
 
@@ -550,7 +525,6 @@ function buildContinuationPrompt(originalPrompt, partialCode, completion) {
 }
 
 async function generateCompleteScad({
-  provider,
   apiKey,
   model,
   system,
@@ -558,9 +532,7 @@ async function generateCompleteScad({
   maxOutputTokens,
   maxContinuations = 3,
 }) {
-  const callFn = provider === 'anthropic' ? callAnthropic : callOpenRouter;
-
-  let response = await callFn({
+  let response = await callOpenRouter({
     apiKey,
     model,
     system,
@@ -568,14 +540,14 @@ async function generateCompleteScad({
     maxOutputTokens,
   });
 
-  let scadCode = extractScad(extractText(response, provider));
-  let finishReason = getFinishReason(response, provider);
+  let scadCode = extractScad(extractText(response));
+  let finishReason = getFinishReason(response);
   let continuationCount = 0;
 
   while (shouldContinueScad(scadCode, finishReason) && continuationCount < maxContinuations) {
     const completion = analyzeScadCompleteness(scadCode);
     const continuationPrompt = buildContinuationPrompt(userPrompt, scadCode, completion);
-    const nextResponse = await callFn({
+    const nextResponse = await callOpenRouter({
       apiKey,
       model,
       system,
@@ -583,14 +555,14 @@ async function generateCompleteScad({
       maxOutputTokens,
     });
 
-    const nextChunk = extractScad(extractText(nextResponse, provider));
+    const nextChunk = extractScad(extractText(nextResponse));
     if (!nextChunk) break;
 
     const merged = mergeScadContinuation(scadCode, nextChunk);
     if (merged === scadCode) break;
 
     scadCode = merged;
-    finishReason = getFinishReason(nextResponse, provider);
+    finishReason = getFinishReason(nextResponse);
     continuationCount += 1;
   }
 
@@ -622,13 +594,11 @@ async function callOpenRouter({ apiKey, model, system, userPrompt, maxOutputToke
     model: model,
     messages,
     max_tokens: maxOutputTokens,
-    temperature: 0.3,
-    // Enable reasoning for kimi-k2.6
     provider: {
       require_parameters: true,
     },
     reasoning: {
-      effort: 'minimal',
+      effort: OPENROUTER_REASONING_EFFORT,
     },
   };
 
@@ -662,57 +632,7 @@ async function callOpenRouter({ apiKey, model, system, userPrompt, maxOutputToke
   }
 }
 
-// ── Anthropic API call ───────────────────────────────
-async function callAnthropic({ apiKey, model, system, userPrompt, maxOutputTokens = 16384 }) {
-  const messages = [
-    { role: 'user', content: userPrompt },
-  ];
-
-  // Anthropic uses extended thinking for Opus 4.7
-  // budget_tokens controls how much the model can think
-  const thinkingBudget = Math.min(maxOutputTokens * 2, 32768);
-
-  const body = {
-    model: model,
-    max_tokens: maxOutputTokens + thinkingBudget,
-    messages,
-    system: system || undefined,
-    temperature: 1, // Required to be 1 when thinking is enabled
-    thinking: {
-      type: 'enabled',
-      budget_tokens: thinkingBudget,
-    },
-  };
-
-  try {
-    const response = await fetch(ANTHROPIC_BASE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': ANTHROPIC_API_VERSION,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const msg = errorData?.error?.message || `Anthropic request failed (${response.status})`;
-      const err = new Error(msg);
-      err.statusCode = response.status;
-      throw err;
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (error.statusCode) throw error;
-    const msg = error?.message || 'Anthropic request failed.';
-    const err = new Error(msg);
-    err.statusCode = 500;
-    throw err;
-  }
-}
-
+// ── Generation routes ────────────────────────────────
 // ── Route: /api/chat/generate ────────────────────────
 async function handleGenerate(req, res, env, authenticatedUser) {
   const body = await readJsonBody(req);
@@ -726,18 +646,15 @@ async function handleGenerate(req, res, env, authenticatedUser) {
     : `Generate OpenSCAD code from scratch.\n\nUser request: ${prompt}`;
 
   const pro = isProUser(authenticatedUser);
-  const provider = pro ? 'anthropic' : 'openrouter';
-  const apiKey = pro ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
-  const model = pro ? ANTHROPIC_MODEL : OPENROUTER_MODEL;
+  const apiKey = env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
     return sendJson(res, 500, { error: 'AI service is not configured.' });
   }
 
   const result = await generateCompleteScad({
-    provider,
     apiKey,
-    model,
+    model: OPENROUTER_MODEL,
     maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_GENERATE,
     userPrompt,
@@ -771,18 +688,15 @@ async function handleFaceEdit(req, res, env, authenticatedUser) {
   ].join('\n');
 
   const pro = isProUser(authenticatedUser);
-  const provider = pro ? 'anthropic' : 'openrouter';
-  const apiKey = pro ? env.ANTHROPIC_API_KEY : env.OPENROUTER_API_KEY;
-  const model = pro ? ANTHROPIC_MODEL : OPENROUTER_MODEL;
+  const apiKey = env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
     return sendJson(res, 500, { error: 'AI service is not configured.' });
   }
 
   const result = await generateCompleteScad({
-    provider,
     apiKey,
-    model,
+    model: OPENROUTER_MODEL,
     maxOutputTokens: 16384,
     system: SYSTEM_PROMPT_FACE_EDIT,
     userPrompt,

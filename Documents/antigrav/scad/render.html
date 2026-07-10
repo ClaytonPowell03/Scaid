@@ -99,8 +99,10 @@
     <!-- ─── Toolbar ──────────────────────────────── -->
     <div class="toolbar">
       <div class="toolbar__left">
-        <a href="/" class="toolbar__logo">
-          <img src="/og-image.png" alt="" class="toolbar__logo-icon" />
+        <a href="/" class="toolbar__logo" aria-label="scAId home">
+          <img src="/logo.png" alt="" class="toolbar__logo-icon" />
+          <span class="toolbar__brand">scAId</span>
+          <span class="toolbar__product">Model workspace</span>
         </a>
         <div class="toolbar__sep"></div>
         <span class="toolbar__filename" id="filename" contenteditable="true" spellcheck="false">orbital_gearbox_housing.scad</span>
@@ -199,7 +201,7 @@
           <span>&lt;/&gt;</span>
         </button>
         <div class="toolbar__sep"></div>
-        <a href="pro.html" class="toolbar-btn" id="btn-pro-toolbar" style="color: #f19ba9; font-weight: bold; margin-right: 8px; text-decoration: none; border: 1px solid #f19ba9;" title="Upgrade to Pro">
+        <a href="pro.html" class="toolbar-btn toolbar-btn--pro" id="btn-pro-toolbar" title="Upgrade to Pro">
           <span>⭐</span> Pro
         </a>
         <!-- Auth: guest sees sign-in btn, signed-in sees avatar -->
@@ -235,19 +237,20 @@
           <!-- Scrollable message history -->
           <div class="chat-panel__history" id="chat-history">
             <div class="chat-message chat-message--assistant">
-              <p>Hello! I'm your <strong>scAId</strong> assistant. Describe the 3D model you'd like to create, and I'll generate SCAD code for it.</p>
-              <p class="chat-message__heading">How to get the best result</p>
+              <p class="chat-message__eyebrow">New model</p>
+              <p class="chat-message__lead">Describe what you want to make. Dimensions, tolerances, and part relationships produce the strongest first pass.</p>
+              <p class="chat-message__heading">Useful details</p>
               <ol class="chat-message__list">
-                <li>Describe the model you want (dimensions and details help).</li>
-                <li>Click any face on the 3D preview to make quick edits.</li>
-                <li>Download the STL and SCAD files once you're happy.</li>
+                <li>Overall size and wall thickness</li>
+                <li>Holes, clearances, and mounting points</li>
+                <li>Which parts should move or repeat</li>
               </ol>
-              <p class="chat-message__note">Please note that scAId is a CAD generator (it cannot create sculptures) and is still in alpha, so results can vary and it works best for simple CAD models.</p>
+              <p class="chat-message__note">Tip: click a face in the viewport to edit that feature in context.</p>
             </div>
           </div>
           
-          <div id="editor-ai-toast" style="opacity: 0; position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); transition: all 0.3s ease; padding: 8px 16px; background: rgba(9, 9, 11, 0.95); border: 1px solid var(--border-accent); border-radius: var(--radius-md); color: var(--text-primary); text-align: center; font-size: 0.85rem; pointer-events: none; z-index: 100; max-width: 90%;">
-            You guys used our expensive AI so much we had to dumb it down and add a cheap $3 plan. <br/><a href="pro.html" style="color:#f19ba9; text-decoration:underline; pointer-events: auto;">Upgrade to Opus 4.7</a>
+          <div id="editor-ai-toast" class="editor-ai-toast">
+            Free generation limit reached. <a href="pro.html">View Pro access</a>
           </div>
 
           <!-- Fixed input area at bottom -->
@@ -281,14 +284,16 @@
 
         <!-- Empty State -->
         <div class="preview-empty" id="preview-empty">
-          <img src="/logo.png" alt="" class="preview-empty__icon" style="width:64px; height:64px; object-fit:contain; opacity:0.3;" />
-          <div class="preview-empty__text">No model rendered</div>
-          <div class="preview-empty__hint">Press Ctrl+Enter or click Render</div>
+          <div class="preview-empty__mark" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="preview-empty__eyebrow">Viewport ready</div>
+          <div class="preview-empty__text">Your model will appear here</div>
+          <div class="preview-empty__hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd> to render</div>
         </div>
 
         <!-- Overlays -->
         <div class="preview-overlay preview-overlay--top-left">
           <div class="preview-info" id="preview-info">
+            <div class="preview-info__label">Model view <span>/</span> <strong id="viewport-view-name">Isometric</strong></div>
             <div class="preview-info__item">
               <span class="preview-info__dot"></span>
               <span id="info-status">Ready</span>
@@ -297,14 +302,14 @@
         </div>
         <div class="preview-overlay preview-overlay--top-right">
           <div class="view-controls">
-            <button class="view-btn" id="view-front" title="Front view (F)">F</button>
-            <button class="view-btn" id="view-top" title="Top view (T)">T</button>
-            <button class="view-btn" id="view-right" title="Right view (R)">R</button>
-            <button class="view-btn" id="view-iso" title="Isometric view (I)">I</button>
+            <button class="view-btn" id="view-front" title="Front view (F)">Front</button>
+            <button class="view-btn" id="view-top" title="Top view (T)">Top</button>
+            <button class="view-btn" id="view-right" title="Right view (R)">Right</button>
+            <button class="view-btn active" id="view-iso" title="Isometric view (I)">Iso</button>
           </div>
         </div>
         <div class="preview-overlay preview-overlay--bottom-left">
-          <div class="animation-panel" id="animation-panel">
+          <div class="animation-panel is-inactive" id="animation-panel">
             <div class="animation-panel__row">
               <button class="animation-toggle" id="btn-animation-play" title="Play or pause animation" aria-label="Play animation" disabled>▶</button>
               <div class="animation-panel__summary">
@@ -379,8 +384,7 @@
 
   <!-- Mobile FAB Toggle -->
   <button class="mobile-code-toggle-fab" id="btn-mobile-code">
-    <span class="fab-icon">💬</span>
-    <span class="fab-text">Chat / Code</span>
+    <span class="fab-text"></span>
   </button>
 
   <!-- Mobile Warning Modal -->

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   Three.js Scene — Premium 3D preview environment
+   Three.js Scene — 3D preview environment
    ═══════════════════════════════════════════════════════ */
 
 import * as THREE from 'three';
@@ -10,7 +10,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /**
- * Creates a premium 3D scene with environment, grid, and post-processing.
+ * Creates the 3D scene with a neutral CAD environment and grid.
  */
 export function createScene(canvas) {
   // ── Renderer ──────────────────────────────────────
@@ -24,7 +24,7 @@ export function createScene(canvas) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.05;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const parent = canvas.parentElement;
@@ -32,8 +32,8 @@ export function createScene(canvas) {
 
   // ── Scene ─────────────────────────────────────────
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x08080d);
-  scene.fog = new THREE.Fog(0x08080d, 200, 1500);
+  scene.background = new THREE.Color(0x0d1011);
+  scene.fog = new THREE.Fog(0x0d1011, 200, 1500);
 
   // ── Camera ────────────────────────────────────────
   const camera = new THREE.PerspectiveCamera(
@@ -58,11 +58,11 @@ export function createScene(canvas) {
 
   // ── Lights ────────────────────────────────────────
   // Ambient
-  const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+  const ambientLight = new THREE.AmbientLight(0x9aa4a3, 0.7);
   scene.add(ambientLight);
 
   // Key light (warm directional)
-  const keyLight = new THREE.DirectionalLight(0xfff0e6, 1.5);
+  const keyLight = new THREE.DirectionalLight(0xfff6e8, 1.8);
   keyLight.position.set(8, 12, 8);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.width = 2048;
@@ -77,27 +77,22 @@ export function createScene(canvas) {
   scene.add(keyLight);
 
   // Fill light (cool)
-  const fillLight = new THREE.DirectionalLight(0x6688cc, 0.5);
+  const fillLight = new THREE.DirectionalLight(0x8ba0b5, 0.48);
   fillLight.position.set(-5, 3, -5);
   scene.add(fillLight);
 
-  // Rim light (accent cyan)
-  const rimLight = new THREE.PointLight(0xf19ba9, 0.8, 30);
+  // Restrained warm rim light for edge definition.
+  const rimLight = new THREE.PointLight(0xff8a64, 0.38, 30);
   rimLight.position.set(-4, 6, -3);
   scene.add(rimLight);
 
-  // Bottom accent (purple)
-  const bottomLight = new THREE.PointLight(0xa855f7, 0.3, 20);
-  bottomLight.position.set(0, -2, 0);
-  scene.add(bottomLight);
-
   // ── Grid ──────────────────────────────────────────
-  const gridHelper = createCustomGrid(40, 40, 0x1a1a2e, 0x111122);
+  const gridHelper = createCustomGrid(40, 40, 0x2a3232, 0x171d1e);
   scene.add(gridHelper);
 
   // Ground plane (for shadows)
   const groundGeo = new THREE.PlaneGeometry(100, 100);
-  const groundMat = new THREE.ShadowMaterial({ opacity: 0.3, depthWrite: false });
+  const groundMat = new THREE.ShadowMaterial({ opacity: 0.22, depthWrite: false });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.01;
@@ -116,9 +111,9 @@ export function createScene(canvas) {
 
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(parent.clientWidth, parent.clientHeight),
-    0.3,   // strength — subtle
-    0.6,   // radius
-    0.85   // threshold
+    0.06,  // only enough to soften very bright edges
+    0.25,
+    0.94
   );
   composer.addPass(bloomPass);
 
@@ -141,13 +136,7 @@ export function createScene(canvas) {
   function animate() {
     animId = requestAnimationFrame(animate);
     const delta = clock.getDelta();
-    const elapsed = clock.getElapsedTime();
-
     controls.update();
-
-    // Subtle rim light movement
-    rimLight.position.x = Math.sin(elapsed * 0.3) * 6;
-    rimLight.position.z = Math.cos(elapsed * 0.3) * 6;
 
     composer.render();
 
